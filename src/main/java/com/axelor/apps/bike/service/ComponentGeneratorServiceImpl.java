@@ -1,21 +1,20 @@
 package com.axelor.apps.bike.service;
 
 import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toMap;
 
-import com.axelor.apps.base.db.Product;
-import com.axelor.apps.base.db.ProductVariant;
-import com.axelor.apps.base.db.ProductVariantAttr;
-import com.axelor.apps.base.db.ProductVariantConfig;
-import com.axelor.apps.base.db.ProductVariantValue;
-import com.axelor.apps.base.db.repo.ProductRepository;
-import com.axelor.apps.base.db.repo.ProductVariantConfigRepository;
-import com.axelor.apps.base.db.repo.ProductVariantRepository;
+import com.axelor.apps.base.db.*;
+import com.axelor.apps.base.db.repo.*;
 import com.axelor.apps.base.service.ProductService;
 import com.axelor.apps.base.service.ProductVariantService;
 import com.axelor.apps.bike.util.VariantUtils;
 import com.axelor.apps.bike.web.ProductGeneratorController;
 import com.axelor.apps.production.db.BillOfMaterial;
+import com.axelor.apps.production.db.repo.BillOfMaterialRepository;
+import com.axelor.apps.production.service.BillOfMaterialService;
+import com.axelor.db.Query;
 import com.axelor.exception.AxelorException;
+import com.axelor.inject.Beans;
 import com.axelor.meta.MetaFiles;
 import com.google.inject.Inject;
 import com.google.inject.persist.Transactional;
@@ -39,17 +38,19 @@ public class ComponentGeneratorServiceImpl implements ComponentGeneratorService 
 
   @Inject private ProductRepository productRepo;
   @Inject private ProductService productService;
-  @Inject private ProductVariantConfigRepository variantConfigRepos;
   @Inject private ProductVariantRepository variantRepo;
   @Inject private ProductVariantService variantService;
+  @Inject private BillOfMaterialService billOfMaterialService;
+  @Inject private BillOfMaterialRepository billOfMaterialRepository;
   @Inject private MetaFiles metaFiles;
 
   private static final Logger LOG = LoggerFactory.getLogger(ProductGeneratorController.class);
 
   @Transactional
   @Override
-  public void generateProductSmartVariants(Product model) throws AxelorException {
+  public void generateProductSmartVariants(Product model, Boolean debug) throws AxelorException {
 
+    LOG.debug("generateProductSmartVariants");
     JsonObject attrJsonObject = getJsonAttr(model);
 
     List<ProductVariant> productVariants =
@@ -62,108 +63,58 @@ public class ComponentGeneratorServiceImpl implements ComponentGeneratorService 
           variantRepo.save(productVariant);
           Product copy =
               productService.createProduct(model, productVariant, index.incrementAndGet());
-          // Update code
-          copy.setCode(model.getCode() + getProductVariantName(productVariant));
-
-          // Update description (replace <br>)
-          copy.setDescription(copy.getDescription().replace("<br>", ""));
-
-          // Update internal description (replace <br>)
-          copy.setInternalDescription(copy.getInternalDescription().replace("<br>", ""));
-
-          // Set json attr
-          // Names
-          Map<String, String> properties = VariantUtils.getVariantMapName(productVariant);
-          // Set IDX
-          properties.put(VariantUtils.VARIANT_IDX, "" + index.get());
-
-          // Set URL of variants
-          // ex ATTR1=VAL1&ATTR2=VAL2
-          Map<String, String> productMap = VariantUtils.getVariantMapCode(productVariant);
-
-          String url =
-              productMap
-                  .entrySet()
-                  .stream()
-                  .map(e -> e.getKey() + "=" + e.getValue())
-                  .collect(joining("&"));
-          // Expand variants URL for grouping
-          // Permits a single product share multiple variant values
-          properties.put(VariantUtils.VARIANT_URL, url);
-          // Extend the productMap according extend configuration
-          if (extendConfig != null)
-            extendConfig
-                .entrySet()
-                .forEach(
-                    e -> {
-                      if (url.matches(e.getKey())) {
-                        e.getValue()
-                            .entrySet()
-                            .forEach(
-                                e2 -> {
-                                  productMap.put(
-                                      e2.getKey(),
-                                      Arrays.asList(
-                                              e2.getValue().toString(), productMap.get(e2.getKey()))
-                                          .stream()
-                                          .filter(Objects::nonNull)
-                                          .collect(joining("|")));
-                                });
-                      }
-                    });
-          // Construct search string
-          String search =
-              productMap
-                  .entrySet()
-                  .stream()
-                  .map(
-                      e ->
-                          String.format(
-                              e.getKey(),
-                              e.getValue().contains("|")
-                                  ? String.format("(%s)", e.getValue())
-                                  : e.getValue()))
-                  .collect(joining("|"));
-
-          // Set the search regex value on the json attr
-          properties.put(
-              VariantUtils.VARIANT_SEARCH,
-              String.format("(%s){%d}", search, StringUtils.countMatches(search, "=")));
-
-          // Create variant obj
-          JsonObjectBuilder builder = Json.createObjectBuilder();
-          VariantUtils.getVariantMapCode(productVariant)
-              .entrySet()
-              .forEach(e -> builder.add(e.getKey(), e.getValue()));
-          properties.put(VariantUtils.VARIANT_OBJECT, builder.build().toString());
-          // Set json
-          JsonObject json = enrich(getJsonAttr(model), properties);
-          copy.setAttrs(json.toString());
-
+          // Update default partner
+          updateProductCopy(
+              model,
+              copy,
+              index.get(),
+              VariantUtils.getVariantMapCode(productVariant),
+              extendConfig);
+          LOG.debug(copy.getName());
           // Save copy
-          // if(false)
           productRepo.save(copy);
         });
+    if (debug) {
+      throw new AxelorException(4, "Bike application in debug mode");
+    }
   }
 
   @Override
   @Transactional(rollbackOn = {AxelorException.class, Exception.class})
-  public void generateProductBOMVariants(Product model) throws AxelorException {
+  public void generateProductBOMVariants(Product model, Boolean debug) throws AxelorException {
 
-    BillOfMaterial bom = model.getDefaultBillOfMaterial();
-    Set<BillOfMaterial> bomMembers = bom.getBillOfMaterialSet();
-    Map<Product, List<Product>> productMap = getBomMembersWithVariants(bom);
+    final AtomicInteger index = new AtomicInteger(0);
+
+    BillOfMaterial bomModel = model.getDefaultBillOfMaterial();
+    if (bomModel == null) {
+      return;
+    }
+
+    Set<BillOfMaterial> bomMembers = bomModel.getBillOfMaterialSet();
+    if (bomMembers.size() == 0) {
+      return;
+    }
+
+    Map<BillOfMaterial, List<Product>> productMap = getBomMembersWithVariants(bomModel);
     // Get the list of variant combinations
+    if (productMap.size() == 0) {
+      return;
+    }
+    // All variants
+    Map<String, List<String>> attrMap = getVariantMapList(productMap);
+    // Cardinal of variants
     List<String> cardinal =
-        VariantUtils.ofCombinations(getVariantMapList(productMap).values())
+        VariantUtils.ofCombinations(attrMap.values())
             .map(l -> l.stream().collect(Collectors.joining("&")))
             .collect(Collectors.toList());
-    int target = productMap.size();
-    // Iterate the cardinal to match a valid combination
 
+    int target = productMap.size();
+
+    // Iterate the cardinal to match a valid combination
     cardinal.forEach(
         url -> {
-          Map<Product, Product> selectedSet = new LinkedHashMap<>();
+          // Selected
+          Map<BillOfMaterial, Product> selectedSet = new LinkedHashMap<>();
           productMap
               .entrySet()
               .forEach(
@@ -182,19 +133,180 @@ public class ComponentGeneratorServiceImpl implements ComponentGeneratorService 
                             .findFirst();
                     if (found.isPresent()) {
                       selectedSet.put(e.getKey(), found.get());
-                    } else {
-                      // System.out.println("invalid" + url);
                     }
                   });
           // The combination is ok
           if (selectedSet.size() == target) {
-            copyProductAndBom(bom, selectedSet, url);
+
+            LOG.debug(String.format("Product and BOM with URL: %s created", url));
+            // Copy the product
+            Product productCopy = createProductVariant(model, url, index.incrementAndGet());
+            // Get the map of variant in the URL
+            Map<String, String> variantMap =
+                Stream.of(url.split("&"))
+                    .map(str -> str.split("="))
+                    .collect(toMap(entry -> entry[0], entry -> entry[1]));
+            // Update the product values
+            updateProductCopy(model, productCopy, index.get(), variantMap, null);
+            // Create a BOM version
+            BillOfMaterial bomCopy = billOfMaterialService.generateNewVersion(bomModel);
+            // Update the bom with variant members
+            selectedSet
+                .entrySet()
+                .forEach(
+                    prodBom -> {
+                      bomCopy.removeBillOfMaterialSetItem(prodBom.getKey());
+                      BillOfMaterial newBOM = new BillOfMaterial();
+                      newBOM.setProduct(prodBom.getValue());
+                      newBOM.setUnit(prodBom.getKey().getUnit());
+                      newBOM.setQty(prodBom.getKey().getQty());
+                      newBOM.setPriority(prodBom.getKey().getPriority());
+                      bomCopy.addBillOfMaterialSetItem(newBOM);
+                    });
+            // Save the bom and objects
+            productRepo.save(productCopy);
+            bomCopy.setProduct(productCopy);
+            billOfMaterialRepository.save(bomCopy);
+            productCopy.setDefaultBillOfMaterial(bomCopy);
+            billOfMaterialRepository.save(bomCopy);
           }
         });
+    // model.setDefaultBillOfMaterial(bomModel);
+    if (debug) {
+      throw new AxelorException(4, "Bike application in debug mode");
+    }
   }
 
-  private void copyProductAndBom(BillOfMaterial bom, Map<Product, Product> productMap, String url) {
-    System.out.println(url);
+  /**
+   * @param product
+   * @param url
+   * @param index
+   * @return
+   */
+  private Product createProductVariant(Product product, String url, int index) {
+    // Check if product variant exist
+    ProductVariantAttr pvAttr =
+        Query.of(ProductVariantAttr.class).filter("self.name = ?1", product.getCode()).fetchOne();
+    if (pvAttr == null) {
+      pvAttr = new ProductVariantAttr();
+      pvAttr.setCode(product.getCode());
+      pvAttr.setName(product.getCode());
+      Beans.get(ProductVariantAttrRepository.class).save(pvAttr);
+    }
+    ProductVariantValue pvValue =
+        variantService.createProductVariantValue(pvAttr, url, url, BigDecimal.ZERO);
+    Beans.get(ProductVariantValueRepository.class).save(pvValue);
+    ProductVariant pv =
+        variantService.createProductVariant(
+            pvAttr, null, null, null, pvValue, null, null, null, true);
+    Product p = productService.createProduct(product, pv, index);
+    p.setCode(product.getCode() + "_" + url);
+    return p;
+  }
+
+  /**
+   * @param model
+   * @param copy
+   * @param index
+   * @param variantMap
+   * @param extendConfig
+   */
+  private void updateProductCopy(
+      Product model,
+      Product copy,
+      int index,
+      Map<String, String> variantMap,
+      Map<String, Map<String, String>> extendConfig) {
+
+    copy.setDefaultSupplierPartner(model.getDefaultSupplierPartner());
+    // Update code
+    copy.setCode(model.getCode() + getProductVariantName(copy.getProductVariant()));
+    // Update description (replace <br>)
+    copy.setDescription(copy.getDescription().replace("<br>", ""));
+    // Update internal description (replace <br>)
+    copy.setInternalDescription(copy.getInternalDescription().replace("<br>", ""));
+    //
+    final Map<String, String> properties = new HashMap<>();
+    variantMap
+        .entrySet()
+        .forEach(
+            e -> {
+              ProductVariantAttr pva =
+                  Query.of(ProductVariantAttr.class)
+                      .filter("self.code = ?1", e.getKey())
+                      .fetchOne();
+              //      = variantAttrRepository.findByCode(e.getKey());
+              List<ProductVariantValue> values = pva.getProductVariantValueList();
+              Optional<ProductVariantValue> value =
+                  values.stream().filter(v -> v.getCode().equals(e.getValue())).findFirst();
+              if (value.isPresent()) {
+                properties.put(e.getKey(), value.get().getName());
+              }
+            });
+    // Set IDX
+    properties.put(VariantUtils.VARIANT_IDX, String.format("%04d", index));
+
+    String url =
+        variantMap
+            .entrySet()
+            .stream()
+            .map(e -> e.getKey() + "=" + e.getValue())
+            .collect(joining("&"));
+    // Expand variants URL for grouping
+    // Permits a single product share multiple variant values
+    properties.put(VariantUtils.VARIANT_URL, url);
+    // Extend the productMap according extend configuration
+    final Map<String, String> objectVariants = new HashMap<>(variantMap);
+
+    if (extendConfig != null) {
+
+      extendConfig
+          .entrySet()
+          .forEach(
+              e -> {
+                if (url.matches(e.getKey())) {
+                  e.getValue()
+                      .entrySet()
+                      .forEach(
+                          e2 -> {
+                            objectVariants.put(
+                                e2.getKey(),
+                                Arrays.asList(
+                                        e2.getValue().toString(), objectVariants.get(e2.getKey()))
+                                    .stream()
+                                    .filter(Objects::nonNull)
+                                    .collect(joining("|")));
+                          });
+                }
+              });
+    }
+    // Construct search string
+    String search =
+        objectVariants
+            .entrySet()
+            .stream()
+            .map(
+                e ->
+                    String.format(
+                        "(.*%s=%s.*)",
+                        e.getKey(),
+                        e.getValue().contains("|")
+                            ? String.format("(%s)", e.getValue())
+                            : e.getValue()))
+            .collect(joining("|"));
+
+    // Set the search regex value on the json attr
+    properties.put(
+        VariantUtils.VARIANT_SEARCH,
+        String.format("(%s){%d}", search, StringUtils.countMatches(search, "=")));
+
+    // Create variant obj
+    JsonObjectBuilder builder = Json.createObjectBuilder();
+    variantMap.entrySet().forEach(e -> builder.add(e.getKey(), e.getValue()));
+    properties.put(VariantUtils.VARIANT_OBJECT, builder.build().toString());
+    // Set json
+    JsonObject json = enrich(getJsonAttr(model), properties);
+    copy.setAttrs(json.toString());
   }
 
   /**
@@ -203,8 +315,8 @@ public class ComponentGeneratorServiceImpl implements ComponentGeneratorService 
    * @param bom
    * @return
    */
-  private Map<Product, List<Product>> getBomMembersWithVariants(BillOfMaterial bom) {
-    Map<Product, List<Product>> res = new LinkedHashMap<>();
+  private Map<BillOfMaterial, List<Product>> getBomMembersWithVariants(BillOfMaterial bom) {
+    Map<BillOfMaterial, List<Product>> res = new LinkedHashMap<>();
     bom.getBillOfMaterialSet()
         .forEach(
             e -> {
@@ -212,7 +324,7 @@ public class ComponentGeneratorServiceImpl implements ComponentGeneratorService 
                 // res.add(e.getProduct());
                 List<Product> childProductVariants =
                     productRepo.all().filter("self.parentProduct = ?1", e.getProduct()).fetch();
-                res.put(e.getProduct(), childProductVariants);
+                res.put(e, childProductVariants);
               }
             });
     return res;
@@ -222,16 +334,16 @@ public class ComponentGeneratorServiceImpl implements ComponentGeneratorService 
    * @param products
    * @return
    */
-  private Map<String, List<String>> getVariantMapList(Map<Product, List<Product>> products) {
+  private Map<String, List<String>> getVariantMapList(Map<BillOfMaterial, List<Product>> products) {
     Map<String, List<String>> res = new LinkedHashMap<>();
     products
         .values()
         .forEach(
-            l ->
-                l.forEach(
-                    p -> {
+            prods ->
+                prods.forEach(
+                    prod -> {
                       String str =
-                          getJsonAttr(p)
+                          getJsonAttr(prod)
                               .getString(VariantUtils.VARIANT_OBJECT); // .replace("\"", "");
                       JsonObject object = Json.createReader(new StringReader(str)).readObject();
                       object
@@ -293,7 +405,7 @@ public class ComponentGeneratorServiceImpl implements ComponentGeneratorService 
       if (attrJsonObject.containsKey(VariantUtils.VARIANT_EXCLUDE)) {
         regexFiler =
             attrJsonObject
-                .get(VariantUtils.VARIANT_EXPAND)
+                .get(VariantUtils.VARIANT_EXCLUDE)
                 .toString()
                 .replace("\"", "")
                 .trim()
@@ -308,8 +420,7 @@ public class ComponentGeneratorServiceImpl implements ComponentGeneratorService 
     variants.forEach(
         v -> {
           String url = VariantUtils.getVariantURL(v);
-          boolean add = true;
-          if (!regex.stream().filter(r -> url.matches(r)).findFirst().isPresent()) {
+          if (!regex.stream().anyMatch(r -> url.matches(r))) {
             res.add(v);
           }
         });
@@ -320,7 +431,7 @@ public class ComponentGeneratorServiceImpl implements ComponentGeneratorService 
    * @param src
    * @return
    */
-  public JsonObject getJsonAttr(Product src) {
+  private JsonObject getJsonAttr(Product src) {
     String attr = src.getAttrs();
     if (attr == null) {
       attr = "{}";
@@ -336,14 +447,14 @@ public class ComponentGeneratorServiceImpl implements ComponentGeneratorService 
     return builder.build();
   }
 
-  public JsonObject enrich(JsonObject source, Map<String, String> map) {
+  private JsonObject enrich(JsonObject source, Map<String, String> map) {
     JsonObjectBuilder builder = Json.createObjectBuilder();
     source.entrySet().forEach(e -> builder.add(e.getKey(), e.getValue()));
     map.entrySet().forEach(e -> builder.add(e.getKey(), e.getValue()));
     return builder.build();
   }
 
-  protected List<ProductVariant> getProductVariantList(ProductVariantConfig productVariantConfig) {
+  private List<ProductVariant> getProductVariantList(ProductVariantConfig productVariantConfig) {
 
     List<ProductVariant> productVariantList = new ArrayList<>();
 
@@ -451,7 +562,7 @@ public class ComponentGeneratorServiceImpl implements ComponentGeneratorService 
     return productVariantList;
   }
 
-  public ProductVariant createProductVariant(
+  private ProductVariant createProductVariant(
       ProductVariantConfig productVariantConfig,
       ProductVariantValue productVariantValue1,
       ProductVariantValue productVariantValue2,

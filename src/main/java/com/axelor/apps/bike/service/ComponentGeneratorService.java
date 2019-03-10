@@ -6,8 +6,8 @@ import com.google.inject.persist.Transactional;
 
 public interface ComponentGeneratorService {
   @Transactional(rollbackOn = {AxelorException.class, Exception.class})
-  public void generateProductSmartVariants(Product model) throws AxelorException;
+  public void generateProductSmartVariants(Product model, Boolean debug) throws AxelorException;
 
   @Transactional(rollbackOn = {AxelorException.class, Exception.class})
-  public void generateProductBOMVariants(Product model) throws AxelorException;
+  public void generateProductBOMVariants(Product model, Boolean debug) throws AxelorException;
 }

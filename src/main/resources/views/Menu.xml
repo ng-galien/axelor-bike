@@ -22,7 +22,7 @@
 	</action-view>
 
 	<menuitem name="bike-products-variants" parent="bike-root" order="10"
-			  title="Produits avec variante" action="bike.root.products.variants" />
+			  title="Produits avec variantes" action="bike.root.products.variants" />
 
 	<action-view name="bike.root.products.variants" title="Variantes des produits"
 				 model="com.axelor.apps.base.db.Product" >

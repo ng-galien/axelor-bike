@@ -33,7 +33,8 @@ public class VariantUtils {
   }
 
   /**
-   * Return a map as an expander list, used to extend the variant of a product
+   * Return a map as an expander list, used to extend the variant of a product Format is
+   * [regex];PROP1=VAL1&PROP2=VAL2
    *
    * @param object Json object in key VARIANT_EXPAND
    * @return a Map with key as the regex pattern, the value is a map of {variant attribute, variant

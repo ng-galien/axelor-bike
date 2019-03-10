@@ -18,15 +18,18 @@
 package com.axelor.apps.bike.service.app;
 
 import com.axelor.apps.base.db.AppBike;
+import com.axelor.apps.base.db.repo.AppBikeRepository;
 import com.axelor.apps.base.service.app.AppBaseServiceImpl;
-import com.axelor.db.Query;
+import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 @Singleton
 public class AppBikeServiceImpl extends AppBaseServiceImpl implements AppBikeService {
 
+  @Inject private AppBikeRepository appBikeRepo;
+
   @Override
   public AppBike getAppBike() {
-    return Query.of(AppBike.class).cacheable().fetchOne();
+    return appBikeRepo.all().fetchOne();
   }
 }
