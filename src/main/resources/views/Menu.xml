@@ -37,4 +37,20 @@
 		<context name="_productTypeSelect" expr="storable"/>
 	</action-view>
 	
+	<menuitem name="bike-products-bikes" parent="bike-root" order="20"
+			  title="Bikes configs" action="bike.root.products.bikes" />
+			  
+	<action-view name="bike.root.products.bikes" title="Variantes des produits"
+				 model="com.axelor.apps.base.db.Product" >
+		<view type="cards" name="product-cards" />
+		<view type="grid" name="product-grid" />
+		<view type="form" name="product-form" />
+		<view-param name="limit" value="39"/>
+		<view-param name="search-filters" value="products-filters"/>
+		<domain>self.isModel = :_isModel AND self.productTypeSelect = :_productTypeSelect </domain>
+		<context name="_activeCompany" expr="eval:__user__.activeCompany"/>
+		<context name="_isModel" expr="true"/>
+		<context name="_productTypeSelect" expr="storable"/>
+	</action-view>
+	
 </object-views>

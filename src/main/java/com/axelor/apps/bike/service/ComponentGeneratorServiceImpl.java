@@ -48,16 +48,23 @@ public class ComponentGeneratorServiceImpl implements ComponentGeneratorService 
 
   @Transactional
   @Override
-  public void generateProductSmartVariants(Product model, Boolean debug) throws AxelorException {
+  public int generateProductSmartVariants(Product model, Boolean debug) throws AxelorException {
 
     LOG.debug("generateProductSmartVariants");
+
     JsonObject attrJsonObject = getJsonAttr(model);
 
+    // Get the filtered list of variant according the config
     List<ProductVariant> productVariants =
-        filterVariants(model, getProductVariantList(model.getProductVariantConfig()));
-    final AtomicInteger index = new AtomicInteger(0);
+        filterVariants(model, VariantUtils.getVarianCardinal(model.getProductVariantConfig()));
+
+    // Index and count
+    final AtomicInteger index = new AtomicInteger(getChildCount(model));
+    final AtomicInteger count = new AtomicInteger(0);
+
     final Map<String, Map<String, String>> extendConfig =
         VariantUtils.getProductExtenderConfig(attrJsonObject);
+
     productVariants.forEach(
         productVariant -> {
           variantRepo.save(productVariant);
@@ -73,42 +80,64 @@ public class ComponentGeneratorServiceImpl implements ComponentGeneratorService 
           LOG.debug(copy.getName());
           // Save copy
           productRepo.save(copy);
+          count.incrementAndGet();
         });
     if (debug) {
       throw new AxelorException(4, "Bike application in debug mode");
     }
+    return count.get();
   }
 
+  /**
+   * @param model
+   * @param debug
+   * @throws AxelorException
+   */
   @Override
   @Transactional(rollbackOn = {AxelorException.class, Exception.class})
-  public void generateProductBOMVariants(Product model, Boolean debug) throws AxelorException {
+  public int generateProductBOMVariants(Product model, Boolean debug) throws AxelorException {
 
-    final AtomicInteger index = new AtomicInteger(0);
-
+    LOG.debug("generateProductBOMVariants for: "+model.getCode());
+    // Control if product model have a valid BOM
     BillOfMaterial bomModel = model.getDefaultBillOfMaterial();
     if (bomModel == null) {
-      return;
+      throw new AxelorException(4, "Product model have no BOM");
     }
 
     Set<BillOfMaterial> bomMembers = bomModel.getBillOfMaterialSet();
     if (bomMembers.size() == 0) {
-      return;
+      throw new AxelorException(4, "BOM is Empty");
     }
 
-    Map<BillOfMaterial, List<Product>> productMap = getBomMembersWithVariants(bomModel);
     // Get the list of variant combinations
+    Map<BillOfMaterial, List<Product>> productMap = getBomMembersWithVariants(bomModel);
     if (productMap.size() == 0) {
-      return;
+      throw new AxelorException(4, "BOM does not have variants");
     }
+
     // All variants
     Map<String, List<String>> attrMap = getVariantMapList(productMap);
-    // Cardinal of variants
+
+    // List of existing variants
+    List<String> childUrl =
+        getChilds(model)
+            .stream()
+            .map(child -> getJsonAttr(child).get(VariantUtils.VARIANT_URL).toString())
+            .collect(Collectors.toList());
+
+    // Cardinal of variants filtered with childs
     List<String> cardinal =
         VariantUtils.ofCombinations(attrMap.values())
             .map(l -> l.stream().collect(Collectors.joining("&")))
+            .filter(s -> !childUrl.contains(s))
             .collect(Collectors.toList());
 
-    int target = productMap.size();
+    // The number of products we have to find
+    int targetSize = productMap.size();
+
+    // Index, starting at child count
+    final AtomicInteger index = new AtomicInteger(getChildCount(model) + 1);
+    final AtomicInteger count = new AtomicInteger(0);
 
     // Iterate the cardinal to match a valid combination
     cardinal.forEach(
@@ -136,7 +165,7 @@ public class ComponentGeneratorServiceImpl implements ComponentGeneratorService 
                     }
                   });
           // The combination is ok
-          if (selectedSet.size() == target) {
+          if (selectedSet.size() == targetSize) {
 
             LOG.debug(String.format("Product and BOM with URL: %s created", url));
             // Copy the product
@@ -156,12 +185,16 @@ public class ComponentGeneratorServiceImpl implements ComponentGeneratorService 
                 .forEach(
                     prodBom -> {
                       bomCopy.removeBillOfMaterialSetItem(prodBom.getKey());
-                      BillOfMaterial newBOM = new BillOfMaterial();
-                      newBOM.setProduct(prodBom.getValue());
-                      newBOM.setUnit(prodBom.getKey().getUnit());
-                      newBOM.setQty(prodBom.getKey().getQty());
-                      newBOM.setPriority(prodBom.getKey().getPriority());
-                      bomCopy.addBillOfMaterialSetItem(newBOM);
+                      if(prodBom.getValue().getDefaultBillOfMaterial() != null) {
+                        bomCopy.addBillOfMaterialSetItem(prodBom.getValue().getDefaultBillOfMaterial());
+                      } else {
+                        BillOfMaterial newBOM = new BillOfMaterial();
+                        newBOM.setProduct(prodBom.getValue());
+                        newBOM.setUnit(prodBom.getKey().getUnit());
+                        newBOM.setQty(prodBom.getKey().getQty());
+                        newBOM.setPriority(prodBom.getKey().getPriority());
+                        newBOM.setDefineSubBillOfMaterial(prodBom.getKey().getDefineSubBillOfMaterial());
+                      }
                     });
             // Save the bom and objects
             productRepo.save(productCopy);
@@ -169,12 +202,14 @@ public class ComponentGeneratorServiceImpl implements ComponentGeneratorService 
             billOfMaterialRepository.save(bomCopy);
             productCopy.setDefaultBillOfMaterial(bomCopy);
             billOfMaterialRepository.save(bomCopy);
+            count.incrementAndGet();
           }
         });
     // model.setDefaultBillOfMaterial(bomModel);
     if (debug) {
       throw new AxelorException(4, "Bike application in debug mode");
     }
+    return count.get();
   }
 
   /**
@@ -200,7 +235,7 @@ public class ComponentGeneratorServiceImpl implements ComponentGeneratorService 
         variantService.createProductVariant(
             pvAttr, null, null, null, pvValue, null, null, null, true);
     Product p = productService.createProduct(product, pv, index);
-    p.setCode(product.getCode() + "_" + url);
+    p.setCode(product.getCode() + "-" + index);
     return p;
   }
 
@@ -220,7 +255,7 @@ public class ComponentGeneratorServiceImpl implements ComponentGeneratorService 
 
     copy.setDefaultSupplierPartner(model.getDefaultSupplierPartner());
     // Update code
-    copy.setCode(model.getCode() + getProductVariantName(copy.getProductVariant()));
+    copy.setCode(String.format("%s-%03d", model.getCode(), index));
     // Update description (replace <br>)
     copy.setDescription(copy.getDescription().replace("<br>", ""));
     // Update internal description (replace <br>)
@@ -246,12 +281,7 @@ public class ComponentGeneratorServiceImpl implements ComponentGeneratorService 
     // Set IDX
     properties.put(VariantUtils.VARIANT_IDX, String.format("%04d", index));
 
-    String url =
-        variantMap
-            .entrySet()
-            .stream()
-            .map(e -> e.getKey() + "=" + e.getValue())
-            .collect(joining("&"));
+    String url = VariantUtils.getVariantURL(variantMap);
     // Expand variants URL for grouping
     // Permits a single product share multiple variant values
     properties.put(VariantUtils.VARIANT_URL, url);
@@ -320,10 +350,10 @@ public class ComponentGeneratorServiceImpl implements ComponentGeneratorService 
     bom.getBillOfMaterialSet()
         .forEach(
             e -> {
-              if (e.getProduct().getProductVariantConfig() != null) {
+              List<Product> childProductVariants = getChilds(e.getProduct());
+              if (childProductVariants.size() > 0) {
                 // res.add(e.getProduct());
-                List<Product> childProductVariants =
-                    productRepo.all().filter("self.parentProduct = ?1", e.getProduct()).fetch();
+                // productRepo.all().filter("self.parentProduct = ?1", e.getProduct()).fetch();
                 res.put(e, childProductVariants);
               }
             });
@@ -363,6 +393,10 @@ public class ComponentGeneratorServiceImpl implements ComponentGeneratorService 
     return res;
   }
 
+  /**
+   * @param variant
+   * @return
+   */
   private String getProductVariantName(ProductVariant variant) {
     String res = "-";
     if (variant.getProductVariantAttr1() != null) {
@@ -396,10 +430,13 @@ public class ComponentGeneratorServiceImpl implements ComponentGeneratorService 
    */
   private List<ProductVariant> filterVariants(Product model, List<ProductVariant> variants) {
 
+    // Get the Existing Variants
+    List<Product> childs = getChilds(model);
+
     // Retrieve filters from Json object of attrs
     String attrs = model.getAttrs();
     String[] regexFiler = new String[0];
-
+    // Construct de regex filter
     if (attrs != null) {
       JsonObject attrJsonObject = getJsonAttr(model);
       if (attrJsonObject.containsKey(VariantUtils.VARIANT_EXCLUDE)) {
@@ -412,19 +449,45 @@ public class ComponentGeneratorServiceImpl implements ComponentGeneratorService 
                 .split("[\\\\n]+");
       }
     }
-    if (regexFiler.length == 0) {
-      return variants;
-    }
     final List<String> regex = Stream.of(regexFiler).collect(Collectors.toList());
-    List<ProductVariant> res = new ArrayList<>();
-    variants.forEach(
-        v -> {
-          String url = VariantUtils.getVariantURL(v);
-          if (!regex.stream().anyMatch(r -> url.matches(r))) {
-            res.add(v);
-          }
-        });
-    return res;
+    // Childs url
+    final List<String> childUrls =
+        childs
+            .stream()
+            .map(
+                child -> {
+                  return VariantUtils.getVariantURL(child.getProductVariant());
+                })
+            .collect(Collectors.toList());
+    // Filter: is not in child url and does not match regex
+    return variants
+        .stream()
+        .filter(
+            pv -> {
+              String url = VariantUtils.getVariantURL(pv);
+              return !childUrls.contains(url) && !regex.stream().anyMatch(r -> url.matches(r));
+            })
+        .collect(Collectors.toList());
+  }
+
+  /**
+   * Get the product child list of the model
+   *
+   * @param model
+   * @return
+   */
+  private List<Product> getChilds(Product model) {
+    return productRepo.all().filter("self.parentProduct = ?1", model).fetch();
+  }
+
+  /**
+   * Get the variants count of the model
+   *
+   * @param model
+   * @return
+   */
+  private int getChildCount(Product model) {
+    return getChilds(model).size();
   }
 
   /**
@@ -452,150 +515,6 @@ public class ComponentGeneratorServiceImpl implements ComponentGeneratorService 
     source.entrySet().forEach(e -> builder.add(e.getKey(), e.getValue()));
     map.entrySet().forEach(e -> builder.add(e.getKey(), e.getValue()));
     return builder.build();
-  }
-
-  private List<ProductVariant> getProductVariantList(ProductVariantConfig productVariantConfig) {
-
-    List<ProductVariant> productVariantList = new ArrayList<>();
-
-    if (productVariantConfig.getProductVariantAttr1() != null
-        && productVariantConfig.getProductVariantValue1Set() != null) {
-
-      for (ProductVariantValue productVariantValue1 :
-          productVariantConfig.getProductVariantValue1Set()) {
-
-        productVariantList.addAll(
-            this.getProductVariantList(productVariantConfig, productVariantValue1));
-      }
-    }
-
-    return productVariantList;
-  }
-
-  private List<ProductVariant> getProductVariantList(
-      ProductVariantConfig productVariantConfig, ProductVariantValue productVariantValue1) {
-
-    List<ProductVariant> productVariantList = new ArrayList<>();
-
-    if (productVariantConfig.getProductVariantAttr2() != null
-        && productVariantConfig.getProductVariantValue2Set() != null) {
-
-      for (ProductVariantValue productVariantValue2 :
-          productVariantConfig.getProductVariantValue2Set()) {
-
-        productVariantList.addAll(
-            this.getProductVariantList(
-                productVariantConfig, productVariantValue1, productVariantValue2));
-      }
-    } else {
-
-      productVariantList.add(
-          this.createProductVariant(productVariantConfig, productVariantValue1, null, null, null));
-    }
-
-    return productVariantList;
-  }
-
-  private List<ProductVariant> getProductVariantList(
-      ProductVariantConfig productVariantConfig,
-      ProductVariantValue productVariantValue1,
-      ProductVariantValue productVariantValue2) {
-
-    List<ProductVariant> productVariantList = new ArrayList<>();
-
-    if (productVariantConfig.getProductVariantAttr3() != null
-        && productVariantConfig.getProductVariantValue3Set() != null) {
-
-      for (ProductVariantValue productVariantValue3 :
-          productVariantConfig.getProductVariantValue3Set()) {
-
-        productVariantList.addAll(
-            this.getProductVariantList(
-                productVariantConfig,
-                productVariantValue1,
-                productVariantValue2,
-                productVariantValue3));
-      }
-    } else {
-
-      productVariantList.add(
-          this.createProductVariant(
-              productVariantConfig, productVariantValue1, productVariantValue2, null, null));
-    }
-
-    return productVariantList;
-  }
-
-  private List<ProductVariant> getProductVariantList(
-      ProductVariantConfig productVariantConfig,
-      ProductVariantValue productVariantValue1,
-      ProductVariantValue productVariantValue2,
-      ProductVariantValue productVariantValue3) {
-
-    List<ProductVariant> productVariantList = new ArrayList<>();
-
-    if (productVariantConfig.getProductVariantAttr4() != null
-        && productVariantConfig.getProductVariantValue4Set() != null) {
-
-      for (ProductVariantValue productVariantValue4 :
-          productVariantConfig.getProductVariantValue4Set()) {
-
-        productVariantList.add(
-            this.createProductVariant(
-                productVariantConfig,
-                productVariantValue1,
-                productVariantValue2,
-                productVariantValue3,
-                productVariantValue4));
-      }
-    } else {
-
-      productVariantList.add(
-          this.createProductVariant(
-              productVariantConfig,
-              productVariantValue1,
-              productVariantValue2,
-              productVariantValue3,
-              null));
-    }
-
-    return productVariantList;
-  }
-
-  private ProductVariant createProductVariant(
-      ProductVariantConfig productVariantConfig,
-      ProductVariantValue productVariantValue1,
-      ProductVariantValue productVariantValue2,
-      ProductVariantValue productVariantValue3,
-      ProductVariantValue productVariantValue4) {
-
-    ProductVariantAttr productVariantAttr1 = null,
-        productVariantAttr2 = null,
-        productVariantAttr3 = null,
-        productVariantAttr4 = null;
-    if (productVariantValue1 != null) {
-      productVariantAttr1 = productVariantConfig.getProductVariantAttr1();
-    }
-    if (productVariantValue2 != null) {
-      productVariantAttr2 = productVariantConfig.getProductVariantAttr2();
-    }
-    if (productVariantValue3 != null) {
-      productVariantAttr3 = productVariantConfig.getProductVariantAttr3();
-    }
-    if (productVariantValue4 != null) {
-      productVariantAttr4 = productVariantConfig.getProductVariantAttr4();
-    }
-
-    return variantService.createProductVariant(
-        productVariantAttr1,
-        productVariantAttr2,
-        productVariantAttr3,
-        productVariantAttr4,
-        productVariantValue1,
-        productVariantValue2,
-        productVariantValue3,
-        productVariantValue4,
-        false);
   }
 
   public void copyProduct(Product product, Product copy) {

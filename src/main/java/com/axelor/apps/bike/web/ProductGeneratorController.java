@@ -2,6 +2,7 @@ package com.axelor.apps.bike.web;
 
 import com.axelor.apps.base.db.Product;
 import com.axelor.apps.base.db.repo.ProductRepository;
+import com.axelor.apps.bike.exceptions.IExceptionMessage;
 import com.axelor.apps.bike.service.ComponentGeneratorService;
 import com.axelor.apps.bike.service.app.AppBikeService;
 import com.axelor.db.Query;
@@ -23,18 +24,29 @@ public class ProductGeneratorController {
 
   public void generateSmartVariants(ActionRequest request, ActionResponse response)
       throws AxelorException {
+
+    LOG.debug("generateSmartVariants");
+
     Boolean debug = bikeService.getAppBike().getDebug();
+
     Product product = request.getContext().asType(Product.class);
     product = productRepo.find(product.getId());
 
+    int count = 0;
+    String message = IExceptionMessage.NONE_GENERATED;
+
     if (product.getProductVariantConfig() != null) {
 
-      componentGeneratorService.generateProductSmartVariants(product, debug);
-      // response.setFlash(I18n.get(IExceptionMessage.PRODUCT_1));
-      response.setReload(true);
+      count = componentGeneratorService.generateProductSmartVariants(product, debug);
+      message = IExceptionMessage.PRODUCT_GENERATED;
+
     } else if (product.getDefaultBillOfMaterial() != null) {
-      componentGeneratorService.generateProductBOMVariants(product, debug);
-      // response.setFlash(I18n.get(IExceptionMessage.PRODUCT_1));
+
+      count = componentGeneratorService.generateProductBOMVariants(product, debug);
+      message = IExceptionMessage.BOM_GENERATED;
+    }
+    response.setFlash(String.format(message, count));
+    if (count > 0) {
       response.setReload(true);
     }
   }
