@@ -97,7 +97,7 @@ public class ComponentGeneratorServiceImpl implements ComponentGeneratorService 
   @Transactional(rollbackOn = {AxelorException.class, Exception.class})
   public int generateProductBOMVariants(Product model, Boolean debug) throws AxelorException {
 
-    LOG.debug("generateProductBOMVariants for: "+model.getCode());
+    LOG.debug("generateProductBOMVariants for: " + model.getCode());
     // Control if product model have a valid BOM
     BillOfMaterial bomModel = model.getDefaultBillOfMaterial();
     if (bomModel == null) {
@@ -185,16 +185,20 @@ public class ComponentGeneratorServiceImpl implements ComponentGeneratorService 
                 .forEach(
                     prodBom -> {
                       bomCopy.removeBillOfMaterialSetItem(prodBom.getKey());
-                      if(prodBom.getValue().getDefaultBillOfMaterial() != null) {
-                        bomCopy.addBillOfMaterialSetItem(prodBom.getValue().getDefaultBillOfMaterial());
+                      BillOfMaterial newBOM = null;
+                      //If Product has a default bom include it as subbom
+                      if (prodBom.getValue().getDefaultBillOfMaterial() != null) {
+                        newBOM = prodBom.getValue().getDefaultBillOfMaterial();
+                        newBOM.setDefineSubBillOfMaterial(true);
                       } else {
-                        BillOfMaterial newBOM = new BillOfMaterial();
+                        newBOM = new BillOfMaterial();
                         newBOM.setProduct(prodBom.getValue());
-                        newBOM.setUnit(prodBom.getKey().getUnit());
-                        newBOM.setQty(prodBom.getKey().getQty());
-                        newBOM.setPriority(prodBom.getKey().getPriority());
-                        newBOM.setDefineSubBillOfMaterial(prodBom.getKey().getDefineSubBillOfMaterial());
+                        newBOM.setDefineSubBillOfMaterial(false);
                       }
+                      newBOM.setUnit(prodBom.getKey().getUnit());
+                      newBOM.setQty(prodBom.getKey().getQty());
+                      newBOM.setPriority(prodBom.getKey().getPriority());
+                      bomCopy.addBillOfMaterialSetItem(newBOM);
                     });
             // Save the bom and objects
             productRepo.save(productCopy);
