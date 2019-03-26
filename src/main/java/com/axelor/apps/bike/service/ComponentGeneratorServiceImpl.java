@@ -48,6 +48,7 @@ public class ComponentGeneratorServiceImpl implements ComponentGeneratorService 
   public static final String VARIANT_EXCLUDE = "variant_exclude";
   public static final String VARIANT_EXPAND = "variant_expand";
   public static final String VARIANT_NAME = "variant_name";
+  public static final String VARIANT_FAVORITE = "variant_favorite";
 
   @Inject private ProductRepository productRepo;
   @Inject private ProductService productService;
@@ -59,6 +60,15 @@ public class ComponentGeneratorServiceImpl implements ComponentGeneratorService 
   @Inject private MetaFiles metaFiles;
 
   private static final Logger LOG = LoggerFactory.getLogger(ProductGeneratorController.class);
+
+  @Transactional(rollbackOn = {AxelorException.class, Exception.class})
+  @Override
+  public void setFavorite(Product product, Boolean favorite) {
+    JsonObject srcJson = getJsonAttr(product);
+    JsonObject resJson = enrich(srcJson, VARIANT_FAVORITE, String.valueOf(favorite));
+    product.setAttrs(resJson.toString());
+    productRepo.save(product);
+  }
 
   @Transactional
   @Override

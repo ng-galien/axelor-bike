@@ -24,4 +24,7 @@ public interface ComponentGeneratorService {
 
   @Transactional(rollbackOn = {AxelorException.class, Exception.class})
   Product createProductVariant(Product product, String url, int index);
+
+  @Transactional(rollbackOn = {AxelorException.class, Exception.class})
+  void setFavorite(Product product, Boolean favorite);
 }
