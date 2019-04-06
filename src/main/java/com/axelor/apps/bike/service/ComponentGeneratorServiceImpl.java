@@ -65,7 +65,7 @@ public class ComponentGeneratorServiceImpl implements ComponentGeneratorService 
   @Override
   public void setFavorite(Product product, Boolean favorite) {
     JsonObject srcJson = getJsonAttr(product);
-    JsonObject resJson = enrich(srcJson, VARIANT_FAVORITE, String.valueOf(favorite));
+    JsonObject resJson = updateJson(srcJson, VARIANT_FAVORITE, String.valueOf(favorite));
     product.setAttrs(resJson.toString());
     productRepo.save(product);
   }
@@ -553,7 +553,7 @@ public class ComponentGeneratorServiceImpl implements ComponentGeneratorService 
     variantMap.entrySet().forEach(e -> builder.add(e.getKey(), e.getValue()));
     properties.put(VARIANT_OBJECT, builder.build().toString());
     // Set json
-    JsonObject json = enrich(getJsonAttr(model), properties);
+    JsonObject json = updateJson(getJsonAttr(model), properties);
     copy.setAttrs(json.toString());
   }
 
@@ -727,6 +727,48 @@ public class ComponentGeneratorServiceImpl implements ComponentGeneratorService 
     return jsonReader.readObject();
   }
 
+  public JsonObject updateJson(JsonObject source, String key, String value) {
+    Map<String, String> properties = new TreeMap<>();
+    properties.put(key, value);
+    source
+        .entrySet()
+        .forEach(
+            e -> {
+              if (!properties.containsKey(e.getKey())) {
+                properties.put(e.getKey(), e.getValue().toString());
+              }
+            });
+    JsonObjectBuilder builder = Json.createObjectBuilder();
+    properties
+        .entrySet()
+        .forEach(
+            e -> {
+              builder.add(e.getKey(), e.getValue().replace(JSON_TEXT_DECO, ""));
+            });
+    return builder.build();
+  }
+
+  public JsonObject updateJson(JsonObject source, Map<String, String> map) {
+    Map<String, String> properties = new TreeMap<>(map);
+    source
+        .entrySet()
+        .forEach(
+            e -> {
+              if (!properties.containsKey(e.getKey())) {
+                properties.put(e.getKey(), e.getValue().toString());
+              }
+            });
+    JsonObjectBuilder builder = Json.createObjectBuilder();
+    properties
+        .entrySet()
+        .forEach(
+            e -> {
+              builder.add(e.getKey(), e.getValue().replace(JSON_TEXT_DECO, ""));
+            });
+    return builder.build();
+  }
+
+  /*
   public JsonObject enrich(JsonObject source, String key, String value) {
     JsonObjectBuilder builder = Json.createObjectBuilder();
     builder.add(key, value);
@@ -739,7 +781,7 @@ public class ComponentGeneratorServiceImpl implements ComponentGeneratorService 
     source.entrySet().forEach(e -> builder.add(e.getKey(), e.getValue()));
     map.entrySet().forEach(e -> builder.add(e.getKey(), e.getValue()));
     return builder.build();
-  }
+  }*/
 
   public void copyProduct(Product product, Product copy) {
     copy.setBarCode(null);

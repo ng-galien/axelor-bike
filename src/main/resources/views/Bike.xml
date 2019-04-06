@@ -3,13 +3,12 @@
               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
               xsi:schemaLocation="http://axelor.com/xml/ns/object-views http://axelor.com/xml/ns/object-views/object-views_5.0.xsd">
 
-    <grid name="bike-grid-rv-favourites" title="Modèles Favoris" model="com.axelor.apps.base.db.Product"
+    <grid name="bike-grid-rv-favorites" title="Versions favorites" model="com.axelor.apps.base.db.Product"
           orderBy="code,name"
           x-row-height="80"
           customSearch="true">
         <toolbar>
             <button name="catalogBtn" title="Catalog" onClick="action-print-product-catalog" icon="fa-book"/>
-            <button name="checkDuplicateBtn" title="Check Duplicate" onClick="action-general-check-duplicate-records"/>
         </toolbar>
         <field name="code" x-bind="{{code|unaccent|uppercase}}" width="100"/>
         <field name="attrs.MODEL" width="80"/>
@@ -17,12 +16,14 @@
         <field name="attrs.C_WHEEL" width="80"/>
         <field name="attrs.C_FORK" width="80"/>
         <field name="attrs.MUDG" width="80"/>
+        <field name="attrs.PACK" width="80"/>
         <field name="attrs.SIZE" width="80"/>
         <field name="attrs.LENGTH" width="80"/>
         <field name="attrs.FINISH" width="80"/>
         <field name="attrs.HANDLE" width="80"/>
         <field name="attrs.RACK" width="90"/>
         <field name="attrs.DIAMETER" width="80"/>
+        <button name="bike-grid-remove-favorite" icon="fa-trash" onClick="action-bike-remove-favorite" width="30"/>
     </grid>
 
     <grid name="bike-grid-rv-01" title="Modèles RV01" model="com.axelor.apps.base.db.Product"
@@ -30,7 +31,6 @@
           x-row-height="80"
           customSearch="true">
         <toolbar>
-            <button name="catalogBtn" title="Catalog" onClick="action-print-product-catalog" icon="fa-book"/>
             <button name="checkDuplicateBtn" title="Check Duplicate" onClick="action-general-check-duplicate-records"/>
         </toolbar>
         <field name="code" x-bind="{{code|unaccent|uppercase}}" width="100"/>
@@ -44,7 +44,6 @@
         <field name="attrs.HANDLE" width="80"/>
         <field name="attrs.RACK" width="90"/>
         <field name="attrs.DIAMETER" width="80"/>
-        <field name="attrs.RV_FAVORITE" width="50"/>
         <button name="bike-grid-add-favorite" icon="fa-bookmark" onClick="action-bike-add-favorite" width="30"/>
     </grid>
     <grid name="bike-grid-rv-65" title="Modèles RV65" model="com.axelor.apps.base.db.Product" orderBy="code,name" x-row-height="80">
@@ -55,6 +54,7 @@
         <field name="code" x-bind="{{code|unaccent|uppercase}}" width="100"/>
         <field name="attrs.C_FRAME" width="80"/>
         <field name="attrs.DIAMETER" width="80"/>
+        <button name="bike-grid-add-favorite" icon="fa-bookmark" onClick="action-bike-add-favorite" width="30"/>
     </grid>
     <grid name="bike-grid-rv-XX" title="Modèles RVXX" model="com.axelor.apps.base.db.Product" orderBy="code,name" x-row-height="80">
         <toolbar>
@@ -72,6 +72,7 @@
         <field name="attrs.HANDLE" width="90"/>
         <field name="attrs.RACK" width="100"/>
         <field name="attrs.DIAMETER" width="90"/>
+        <button name="bike-grid-add-favorite" icon="fa-bookmark" onClick="action-bike-add-favorite" width="30"/>
     </grid>
     <grid name="bike-grid-accessories" title="Accessoires" model="com.axelor.apps.base.db.Product" orderBy="code,name" x-row-height="80">
         <toolbar>
@@ -80,16 +81,7 @@
         </toolbar>
         <field name="code" x-bind="{{code|unaccent|uppercase}}" width="100"/>
         <field name="name" width="300"/>
-        <field name="salePrice" width="100"/>
-    </grid>
-
-    <grid name="bike-grid-parts" title="Accessoires" model="com.axelor.apps.base.db.Product" orderBy="code,name" x-row-height="80">
-        <toolbar>
-            <button name="catalogBtn" title="Catalog" onClick="action-print-product-catalog" icon="fa-book"/>
-            <button name="checkDuplicateBtn" title="Check Duplicate" onClick="action-general-check-duplicate-records"/>
-        </toolbar>
-        <field name="code" x-bind="{{code|unaccent|uppercase}}" width="100"/>
-        <field name="name" width="300"/>
+        <field name="salePrice" width="100" x-scale="2"/>
     </grid>
 
     <grid name="bike-grid-goods" title="Accessoires" model="com.axelor.apps.base.db.Product" orderBy="code,name" x-row-height="80">
@@ -99,7 +91,51 @@
         </toolbar>
         <field name="code" x-bind="{{code|unaccent|uppercase}}" width="100"/>
         <field name="name" width="300"/>
+        <field name="salePrice" width="100" x-scale="2"/>
     </grid>
+
+    <grid name="bike-grid-parts" title="Composants" model="com.axelor.apps.base.db.Product" orderBy="code,name" x-row-height="80">
+        <toolbar>
+            <button name="catalogBtn" title="Catalog" onClick="action-print-product-catalog" icon="fa-book"/>
+            <button name="checkDuplicateBtn" title="Check Duplicate" onClick="action-general-check-duplicate-records"/>
+        </toolbar>
+        <field name="code" x-bind="{{code|unaccent|uppercase}}" width="100"/>
+        <field name="name" width="300"/>
+        <field name="salePrice" width="100" x-scale="2"/>
+    </grid>
+
+    <search-filters  name="bike-rv-favorites-filters" model="com.axelor.apps.base.db.Product" title="Filtres RV01">
+
+        <filter title="Modéle: RV01">
+            <domain>self.attrs.MODEL = 'RV01'</domain>
+        </filter>
+        <filter title="Modéle: RV65">
+            <domain>self.attrs.MODEL = 'RV65'</domain>
+        </filter>
+        <filter title="Modéle: RVXX">
+            <domain>self.attrs.MODEL = 'RVXX'</domain>
+        </filter>
+
+        <filter title="Cadre: blanc">
+            <domain>self.attrs.C_FRAME = 'Blanc'</domain>
+        </filter>
+        <filter title="Cadre: gun">
+            <domain>self.attrs.C_FRAME = 'Gun'</domain>
+        </filter>
+        <filter title="Cadre: noir">
+            <domain>self.attrs.C_FRAME = 'Noir'</domain>
+        </filter>
+        <filter title="Cadre: Wimbledon">
+            <domain>self.attrs.C_FRAME = 'Sh. Blanc'</domain>
+        </filter>
+        <filter title="Cadre: Bleu">
+            <domain>self.attrs.C_FRAME = 'Sh. Bleu'</domain>
+        </filter>
+        <filter title="Cadre: Brut">
+            <domain>self.attrs.C_FRAME = 'Brut'</domain>
+        </filter>
+
+    </search-filters>
 
     <search-filters  name="bike-rv-01-filters" model="com.axelor.apps.base.db.Product" title="Filtres RV01">
         <filter title="Cadre: blanc">
@@ -162,11 +198,124 @@
     </search-filters>
 
     <search-filters  name="bike-rv-65-filters" model="com.axelor.apps.base.db.Product" title="Filtres RV01">
-        <filter title="Cadre blanc">
-            <domain>self.attr.C_FRAME = "Blanc Sh."</domain>
+
+        <filter title="Cadre: Gun">
+            <domain>self.attrs.C_FRAME = 'Gun'</domain>
         </filter>
-        <filter title="Cadre noir">
-            <domain>self.attr.C_FRAME = "Noir Sh."</domain>
+        <filter title="Cadre: Noir">
+            <domain>self.attrs.C_FRAME = 'Noir'</domain>
         </filter>
+        <filter title="Cadre: Wimbledon">
+            <domain>self.attrs.C_FRAME = 'Sh. Blanc'</domain>
+        </filter>
+        <filter title="Cadre: Bleu">
+            <domain>self.attrs.C_FRAME = 'Sh. Bleu'</domain>
+        </filter>
+
     </search-filters>
+
+    <search-filters  name="bike-rv-XX-filters" model="com.axelor.apps.base.db.Product" title="Filtres RV01">
+
+        <filter title="Cadre: blanc">
+            <domain>self.attrs.C_FRAME = 'Blanc'</domain>
+        </filter>
+        <filter title="Cadre: gun">
+            <domain>self.attrs.C_FRAME = 'Gun'</domain>
+        </filter>
+        <filter title="Cadre: noir">
+            <domain>self.attrs.C_FRAME = 'Noir'</domain>
+        </filter>
+        <filter title="Cadre: Wimbledon">
+            <domain>self.attrs.C_FRAME = 'Sh. Blanc'</domain>
+        </filter>
+        <filter title="Cadre: Bleu">
+            <domain>self.attrs.C_FRAME = 'Sh. Bleu'</domain>
+        </filter>
+        <filter title="Cadre: Brut">
+            <domain>self.attrs.C_FRAME = 'Brut'</domain>
+        </filter>
+
+        <filter title="Roues: blanches">
+            <domain>self.attrs.C_WHEEL = 'Blanc'</domain>
+        </filter>
+        <filter title="Roues: gun">
+            <domain>self.attrs.C_WHEEL = 'Gun'</domain>
+        </filter>
+        <filter title="Roues: noires">
+            <domain>self.attrs.C_WHEEL = 'Noir'</domain>
+        </filter>
+        <filter title="Roues: brutes">
+            <domain>self.attrs.C_WHEEL = 'Brut'</domain>
+        </filter>
+
+        <filter title="Fourche: brute">
+            <domain>self.attrs.C_FORK = 'Brut'</domain>
+        </filter>
+        <filter title="Fourche: vernie">
+            <domain>self.attrs.C_FORK = 'Verni'</domain>
+        </filter>
+        <filter title="Fourche: blanche">
+            <domain>self.attrs.C_FORK = 'Blanc'</domain>
+        </filter>
+        <filter title="Fourche: gun">
+            <domain>self.attrs.C_FORK = 'Gun'</domain>
+        </filter>
+        <filter title="Fourche: noire">
+            <domain>self.attrs.C_FORK = 'Noir'</domain>
+        </filter>
+
+        <filter title="Garde-boue: noir">
+            <domain>self.attrs.MUDG = 'Black'</domain>
+        </filter>
+        <filter title="Garde-boue: carbone">
+            <domain>self.attrs.MUDG = 'Carbone'</domain>
+        </filter>
+
+        <filter title="Pack: Confort">
+            <domain>self.attrs.FINISH = 'Comfort'</domain>
+        </filter>
+        <filter title="Pack: Sport">
+            <domain>self.attrs.FINISH = 'Sport'</domain>
+        </filter>
+
+        <filter title="Finition: Black">
+            <domain>self.attrs.FINISH = 'Black'</domain>
+        </filter>
+        <filter title="Finition: Silver">
+            <domain>self.attrs.FINISH = 'Silver'</domain>
+        </filter>
+
+        <filter title="Taille: S">
+            <domain>self.attrs.SIZE = 'S'</domain>
+        </filter>
+        <filter title="Finition: L">
+            <domain>self.attrs.SIZE = 'L'</domain>
+        </filter>
+        <filter title="Potence: 60">
+            <domain>self.attrs.LENGTH = '60'</domain>
+        </filter>
+        <filter title="Potence: 80">
+            <domain>self.attrs.LENGTH = '80'</domain>
+        </filter>
+        <filter title="Potence: 110">
+            <domain>self.attrs.LENGTH = '110'</domain>
+        </filter>
+        <filter title="Guidon: City">
+            <domain>self.attrs.HANDLE = 'City'</domain>
+        </filter>
+        <filter title="Guidon: Trek">
+            <domain>self.attrs.HANDLE = 'Trek'</domain>
+        </filter>
+        <filter title="Rack: sans ">
+            <domain>self.attrs.RACK = 'Sans'</domain>
+        </filter>
+        <filter title="Rack: simple ">
+            <domain>self.attrs.RACK = 'Simple'</domain>
+        </filter>
+        <filter title="Rack: complet ">
+            <domain>self.attrs.RACK = 'Complet'</domain>
+        </filter>
+
+    </search-filters>
+
 </object-views>

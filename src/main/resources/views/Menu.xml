@@ -6,7 +6,11 @@
 	<menuitem name="bike-root" title="Les bicyclettes" order="-84"  if="__config__.app.isApp('bike')"
 		icon="fa-bicycle"  icon-background="#555555"/>
 
-	<menuitem name="bike-root-rv" parent="bike-root" order="100"
+	<!--SHOP-->
+	<menuitem name="bike-root-shop" parent="bike-root" order="0"
+			  title="Magasin"/>
+
+	<menuitem name="bike-root-rv" parent="bike-root-shop" order="100"
 			  title="Modèles RV"/>
 
 	<menuitem name="bike-root-rv-favorites" parent="bike-root-rv" order="105"
@@ -24,11 +28,44 @@
 	<menuitem name="bike-root-rv-comp" parent="bike-root-rv" order="140"
 			  title="Pièces détachées" action="bike.root.products.parts" />
 
-	<menuitem name="bike-root-rv-acc" parent="bike-root" order="200"
+	<menuitem name="bike-root-rv-acc" parent="bike-root-shop" order="200"
 			  title="Accessoires" action="bike.root.products.accessories" />
 
-	<menuitem name="bike-root-goods" parent="bike-root" order="300"
+	<menuitem name="bike-root-goods" parent="bike-root-shop" order="300"
 			  title="Goodies" action="bike.root.products.goods" />
+
+	<menuitem name="bike-root-factory" parent="bike-root" order="399"
+			  title="Atelier" />
+	<!--COMPOSANTS-->
+	<menuitem name="bike-root-comp" parent="bike-root-factory" order="400"
+			  title="Pièces" />
+
+	<menuitem name="bike-root-parts-comp-motor" parent="bike-root-comp" order="410"
+			  title="Moteur" action="bike.root.factory.motor"/>
+
+	<menuitem name="bike-root-parts-comp-frame" parent="bike-root-comp" order="420"
+			  title="Cadre" action="bike.root.factory.frame" />
+
+	<menuitem name="bike-root-parts-comp-meca" parent="bike-root-comp" order="430"
+			  title="Mécanique" action="bike.root.factory.meca" />
+
+	<menuitem name="bike-root-parts-comp-brake" parent="bike-root-comp" order="440"
+			  title="Freinage" action="bike.root.factory.brake" />
+
+	<menuitem name="bike-root-parts-comp-all" parent="bike-root-comp" order="450"
+			  title="Toutes" action="bike.root.factory.all" />
+	<!--BOM-->
+	<menuitem name="bike-root-bom" parent="bike-root-factory" order="500"
+			  title="Nomenclatures" action="" />
+
+	<menuitem name="bike-root-bom-pf" parent="bike-root-bom" order="510"
+			  title="Bicyclette" action="bike.root.bom.pf" />
+
+	<menuitem name="bike-root-bom-se" parent="bike-root-bom" order="520"
+			  title="Sous-ensembles" action="bike.root.bom.se" />
+
+	<menuitem name="bike-root-bom-generic" parent="bike-root-bom" order="530"
+			  title="Pièces génériques" action="bike.root.bom.gen" />
 
 	<!-- Favorites -->
 	<action-view name="bike.root.products.rv.favorites" title="Modèles Favoris"
@@ -37,8 +74,8 @@
 		<view type="form" name="product-form" />
 		<view type="cards" name="product-cards" />
 		<view-param name="limit" value="100"/>
-		<view-param name="search-filters" value="bike-rv01-filters"/>
-		<domain>self.isModel = false and self.code like 'PF-%' and self.attrs.RV_FAVORITE = 'true' and self.sellable=true and self.productTypeSelect = 'storable'</domain>
+		<view-param name="search-filters" value="bike-rv-favorites-filters"/>
+		<domain>self.isModel = false and self.code like 'PF-%' and self.attrs.variant_favorite = 'true' and self.sellable=true and self.productTypeSelect = 'storable'</domain>
 		<context name="_activeCompany" expr="eval:__user__.activeCompany"/>
 		<context name="_fromProduction" expr="eval:true" />
 	</action-view>
@@ -74,7 +111,7 @@
 		<view type="form" name="product-form" />
 		<view type="cards" name="product-cards" />
 		<view-param name="limit" value="100"/>
-		<view-param name="search-filters" value="products-filters"/>
+		<view-param name="search-filters" value="bike-rv-XX-filters"/>
 		<domain>self.isModel = false and self.code like 'PF-%' and self.attrs.MODEL = 'RVXX' and self.sellable=true and self.productTypeSelect = 'storable'</domain>
 		<context name="_activeCompany" expr="eval:__user__.activeCompany"/>
 		<context name="_fromProduction" expr="eval:true" />
@@ -121,9 +158,102 @@
 		<call class="com.axelor.apps.bike.web.ProductGeneratorController" method="addToFavorite"/>
 	</action-method>
 
-	<action-record name="bike.remove.favorite" model="com.axelor.apps.base.db.Product" search="self.code = :code">
-		<field name="attrs.RV_FAVORITE" expr="false" />
-	</action-record>
+    <action-method name="action-bike-remove-favorite" >
+        <call class="com.axelor.apps.bike.web.ProductGeneratorController" method="removeFavorite"/>
+    </action-method>
 
+	<!--COMPS-MOTOR -->
+	<action-view name="bike.root.factory.motor" title="Pièces moteur"
+				 model="com.axelor.apps.base.db.Product" >
+		<view type="grid" name="bike-grid-parts" />
+		<view type="form" name="product-form" />
+		<view type="cards" name="product-cards" />
+		<view-param name="limit" value="100"/>
+		<view-param name="search-filters" value="products-filters"/>
+		<domain>self.isModel = false and self.code like 'COMP-001%' and self.productTypeSelect = 'storable'</domain>
+		<context name="_activeCompany" expr="eval:__user__.activeCompany"/>
+		<context name="_fromProduction" expr="eval:true" />
+	</action-view>
+
+	<!--COMPS-MOTOR -->
+	<action-view name="bike.root.factory.frame" title="Pièces cadre"
+				 model="com.axelor.apps.base.db.Product" >
+		<view type="grid" name="bike-grid-parts" />
+		<view type="form" name="product-form" />
+		<view type="cards" name="product-cards" />
+		<view-param name="limit" value="100"/>
+		<view-param name="search-filters" value="products-filters"/>
+		<domain>self.isModel = false and self.code like 'COMP-002%' and self.productTypeSelect = 'storable'</domain>
+		<context name="_activeCompany" expr="eval:__user__.activeCompany"/>
+		<context name="_fromProduction" expr="eval:true" />
+	</action-view>
+
+	<!--COMPS-MECA -->
+	<action-view name="bike.root.factory.meca" title="Pièces mécaniques"
+				 model="com.axelor.apps.base.db.Product" >
+		<view type="grid" name="bike-grid-parts" />
+		<view type="form" name="product-form" />
+		<view type="cards" name="product-cards" />
+		<view-param name="limit" value="100"/>
+		<view-param name="search-filters" value="products-filters"/>
+		<domain>self.isModel = false and self.code like 'COMP-007%' and self.productTypeSelect = 'storable'</domain>
+		<context name="_activeCompany" expr="eval:__user__.activeCompany"/>
+		<context name="_fromProduction" expr="eval:true" />
+	</action-view>
+
+	<!--COMPS-BRAKE -->
+	<action-view name="bike.root.factory.brake" title="Pièces freinage"
+				 model="com.axelor.apps.base.db.Product" >
+		<view type="grid" name="bike-grid-parts" />
+		<view type="form" name="product-form" />
+		<view type="cards" name="product-cards" />
+		<view-param name="limit" value="100"/>
+		<view-param name="search-filters" value="products-filters"/>
+		<domain>self.isModel = false and self.code like 'COMP-006%' and self.productTypeSelect = 'storable'</domain>
+		<context name="_activeCompany" expr="eval:__user__.activeCompany"/>
+		<context name="_fromProduction" expr="eval:true" />
+	</action-view>
+
+	<!--COMPS-ALL -->
+	<action-view name="bike.root.factory.all" title="Toutes les pièces"
+				 model="com.axelor.apps.base.db.Product" >
+		<view type="grid" name="bike-grid-parts" />
+		<view type="form" name="product-form" />
+		<view type="cards" name="product-cards" />
+		<view-param name="limit" value="100"/>
+		<view-param name="search-filters" value="products-filters"/>
+		<domain>self.isModel = false and self.code like 'COMP-%' and self.productTypeSelect = 'storable'</domain>
+		<context name="_activeCompany" expr="eval:__user__.activeCompany"/>
+		<context name="_fromProduction" expr="eval:true" />
+	</action-view>
+
+	<!--BOM-PF -->
+	<action-view name="bike.root.bom.pf" title="Nom. bicyclette"
+				 model="com.axelor.apps.production.db.BillOfMaterial" >
+		<view type="grid" name="bill-of-material-grid" />
+		<view type="form" name="bill-of-material-form" />
+		<domain>self.name like 'PF-%' and self.versionNumber = 1 and self.defineSubBillOfMaterial = true AND self.personalized = false</domain>
+	</action-view>
+
+	<!--BOM-SE -->
+	<action-view name="bike.root.bom.se" title="Nom. Sou-Ens"
+				 model="com.axelor.apps.production.db.BillOfMaterial" >
+		<view type="grid" name="bill-of-material-grid" />
+		<view type="form" name="bill-of-material-form" />
+		<domain>self.name like 'SE-%' and self.versionNumber = 1 and self.defineSubBillOfMaterial = true AND self.personalized = false</domain>
+	</action-view>
+
+	<!--COMP-GENERIC -->
+	<action-view name="bike.root.bom.gen" title="Pièces génériques"
+				 model="com.axelor.apps.base.db.Product" >
+		<view type="grid" name="bike-grid-parts" />
+		<view type="form" name="product-form" />
+		<view type="cards" name="product-cards" />
+		<view-param name="limit" value="100"/>
+		<view-param name="search-filters" value="products-filters"/>
+		<domain>self.isModel = true and self.code like 'COMP-%' and self.productTypeSelect = 'storable'</domain>
+		<context name="_activeCompany" expr="eval:__user__.activeCompany"/>
+		<context name="_fromProduction" expr="eval:true" />
+	</action-view>
 
 </object-views>

@@ -20,17 +20,10 @@ import com.axelor.rpc.ActionResponse;
 import com.google.common.base.Joiner;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-
-import java.io.StringReader;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.json.Json;
-import javax.json.JsonObject;
-import javax.json.JsonObjectBuilder;
-import javax.json.JsonReader;
 
 @Singleton
 public class ProductGeneratorController {
@@ -82,18 +75,20 @@ public class ProductGeneratorController {
   }
 
   public void addToFavorite(ActionRequest request, ActionResponse response) throws AxelorException {
-    long id = (Long)request.getContext().get("id");
+    long id = (Long) request.getContext().get("id");
     Product product = productRepo.find(id);
-    if(product != null) {
+    if (product != null) {
       componentGeneratorService.setFavorite(product, true);
     }
   }
 
-  public void removeFavorite(ActionRequest request, ActionResponse response) throws AxelorException {
-    long id = (Long)request.getContext().get("id");
+  public void removeFavorite(ActionRequest request, ActionResponse response)
+      throws AxelorException {
+    long id = (Long) request.getContext().get("id");
     Product product = productRepo.find(id);
-    if(product != null) {
+    if (product != null) {
       componentGeneratorService.setFavorite(product, false);
+      response.setReload(true);
     }
   }
 
