@@ -34,6 +34,7 @@
 	<menuitem name="bike-root-goods" parent="bike-root-shop" order="300"
 			  title="Goodies" action="bike.root.products.goods" />
 
+	<!-- FACTORY -->
 	<menuitem name="bike-root-factory" parent="bike-root" order="399"
 			  title="Atelier" />
 	<!--COMPOSANTS-->
@@ -66,6 +67,16 @@
 
 	<menuitem name="bike-root-bom-generic" parent="bike-root-bom" order="530"
 			  title="Pièces génériques" action="bike.root.bom.gen" />
+	<!--ANALYSIS -->
+	<!--menuitem name="bike-root-analysis" parent="bike-root" order="600"
+			  title="Analyse" />
+
+	<menuitem name="bike-root-analysis-rvXX" parent="bike-root-analysis" order="610"
+			  title="RVXX" action="bike.root.analysis.rvXX" />
+
+	<action-view name="bike.root.analysis.rvXX" title="Analyse RVXX">
+		<view type="dashboard" name="bike.dashboard.rvXX" />
+	</action-view-->
 
 	<!-- Favorites -->
 	<action-view name="bike.root.products.rv.favorites" title="Modèles Favoris"
@@ -144,7 +155,7 @@
 	<!-- GOODS -->
 	<action-view name="bike.root.products.goods" title="Goodies"
 				 model="com.axelor.apps.base.db.Product" >
-		<view type="grid" name="bike-grid-parts" />
+		<view type="grid" name="bike-grid-goods" />
 		<view type="form" name="product-form" />
 		<view type="cards" name="product-cards" />
 		<view-param name="limit" value="100"/>
@@ -162,10 +173,14 @@
         <call class="com.axelor.apps.bike.web.ProductGeneratorController" method="removeFavorite"/>
     </action-method>
 
+	<action-method name="action-bike-show-stats" >
+		<call class="com.axelor.apps.bike.web.ProductGeneratorController" method="showStats"/>
+	</action-method>
+
 	<!--COMPS-MOTOR -->
 	<action-view name="bike.root.factory.motor" title="Pièces moteur"
 				 model="com.axelor.apps.base.db.Product" >
-		<view type="grid" name="bike-grid-parts" />
+		<view type="grid" name="bike-grid-components" />
 		<view type="form" name="product-form" />
 		<view type="cards" name="product-cards" />
 		<view-param name="limit" value="100"/>
@@ -178,7 +193,7 @@
 	<!--COMPS-MOTOR -->
 	<action-view name="bike.root.factory.frame" title="Pièces cadre"
 				 model="com.axelor.apps.base.db.Product" >
-		<view type="grid" name="bike-grid-parts" />
+		<view type="grid" name="bike-grid-components" />
 		<view type="form" name="product-form" />
 		<view type="cards" name="product-cards" />
 		<view-param name="limit" value="100"/>
@@ -191,7 +206,7 @@
 	<!--COMPS-MECA -->
 	<action-view name="bike.root.factory.meca" title="Pièces mécaniques"
 				 model="com.axelor.apps.base.db.Product" >
-		<view type="grid" name="bike-grid-parts" />
+		<view type="grid" name="bike-grid-components" />
 		<view type="form" name="product-form" />
 		<view type="cards" name="product-cards" />
 		<view-param name="limit" value="100"/>
@@ -204,7 +219,7 @@
 	<!--COMPS-BRAKE -->
 	<action-view name="bike.root.factory.brake" title="Pièces freinage"
 				 model="com.axelor.apps.base.db.Product" >
-		<view type="grid" name="bike-grid-parts" />
+		<view type="grid" name="bike-grid-components" />
 		<view type="form" name="product-form" />
 		<view type="cards" name="product-cards" />
 		<view-param name="limit" value="100"/>
@@ -217,7 +232,7 @@
 	<!--COMPS-ALL -->
 	<action-view name="bike.root.factory.all" title="Toutes les pièces"
 				 model="com.axelor.apps.base.db.Product" >
-		<view type="grid" name="bike-grid-parts" />
+		<view type="grid" name="bike-grid-components" />
 		<view type="form" name="product-form" />
 		<view type="cards" name="product-cards" />
 		<view-param name="limit" value="100"/>
@@ -246,7 +261,7 @@
 	<!--COMP-GENERIC -->
 	<action-view name="bike.root.bom.gen" title="Pièces génériques"
 				 model="com.axelor.apps.base.db.Product" >
-		<view type="grid" name="bike-grid-parts" />
+		<view type="grid" name="bike-grid-components" />
 		<view type="form" name="product-form" />
 		<view type="cards" name="product-cards" />
 		<view-param name="limit" value="100"/>

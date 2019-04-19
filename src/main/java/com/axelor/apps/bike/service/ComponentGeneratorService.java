@@ -27,4 +27,7 @@ public interface ComponentGeneratorService {
 
   @Transactional(rollbackOn = {AxelorException.class, Exception.class})
   void setFavorite(Product product, Boolean favorite);
+
+  @Transactional(rollbackOn = {AxelorException.class, Exception.class})
+  void updateBOM(Product product);
 }

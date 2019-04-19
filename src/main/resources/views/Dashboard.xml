@@ -1,0 +1,77 @@
+<object-views xmlns="http://axelor.com/xml/ns/object-views"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://axelor.com/xml/ns/object-views http://axelor.com/xml/ns/object-views/object-views_5.0.xsd">
+
+    <!-- RV XXX Dashboard -->
+    <dashboard title="Vue d'ensemble" name="bike.dashboard.rvXX" >
+
+        <dashlet action="bike.dashboard.rvXX.dashlet.cost" height="200" colSpan="12" />
+        <dashlet action="bike.dashboard.rvXX.dashlet.cost.per.supplier" height="500" colSpan="12"/>
+        <dashlet action="bike.dashboard.rvXX.dashlet.grid" height="700" colSpan="12"/>
+
+    </dashboard>
+
+    <action-view title="" name="bike.dashboard.rvXX.dashlet.cost">
+        <view type="chart" name="chart.bike.rvXX.cost"/>
+    </action-view>
+    <action-view title="" name="bike.dashboard.rvXX.dashlet.cost.per.supplier">
+        <view type="chart" name="chart.bike.rvXX.cost.per.supplier"/>
+    </action-view>
+    <action-view title="" name="bike.dashboard.rvXX.dashlet.grid"
+                 model="com.axelor.apps.base.db.BomInfo"  >
+        <view type="grid" name="bike-flat-bom-grid"/>
+        <view-param name="limit" value="200"/>
+        <domain>self.productRoot like :_root_id</domain>
+    </action-view>
+
+    <chart name="chart.bike.rvXX.cost" title="Coût total"
+           stacked="true" >
+        <dataset type="sql">
+            select
+            'Achat' as _title
+            ,sum(purchase_price) as _purchase_price
+            from base_bom_info info
+            where info.product_root like :_root_id
+            union
+            select 'Vente', sale_price
+            from base_product where code like :_root_id
+            order by _purchase_price desc
+        </dataset>
+        <!--category key="_title" type="text" title=""/-->
+        <category key="_title" type="text"/>
+        <series key="_purchase_price" type="hbar" title=""/>
+        <config name="max" value="7000"/>
+    </chart>
+
+    <chart name="chart.bike.rvXX.cost.per.supplier" title="Coût par fournisseur">
+        <dataset type="sql">
+            select
+            supplier_name as _supplier,
+            sum(purchase_price) as _purchase_price
+            from base_bom_info info
+            where info.product_root like :_root_id
+            group by _supplier
+            order by _purchase_price desc
+        </dataset>
+        <category key="_supplier" type="text" title="Fournisseur"/>
+        <series key="_purchase_price" type="pie" title="Coût"/>
+        <config name="percent" value="true"/>
+    </chart>
+
+    <grid name="bike-flat-bom-grid" title="Nomenclature"
+          model="com.axelor.apps.base.db.BomInfo" x-row-height="40" orderBy="productCode"
+          edit-icon="false" >
+        <hilite color="danger" if="maxProduct &lt;= 20"/>
+        <hilite color="warning" if="maxProduct &lt;= 50"/>
+        <field name="productRoot" hidden="true"/>
+        <field name="productCode" width="180"/>
+        <field name="productName" width="250"/>
+        <field name="supplierName" width="200"/>
+        <field name="quantity" width="80" x-scale="0"/>
+        <field name="stock" width="80" x-scale="0"/>
+        <field name="maxProduct" width="80" x-scale="0"/>
+        <field name="purchasePrice" width="80" x-scale="0"/>
+        <field name="stockValue" width="80" x-scale="0"/>
+
+    </grid>
+</object-views>

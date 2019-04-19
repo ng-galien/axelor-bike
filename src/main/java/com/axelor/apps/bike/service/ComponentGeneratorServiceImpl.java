@@ -63,6 +63,85 @@ public class ComponentGeneratorServiceImpl implements ComponentGeneratorService 
 
   @Transactional(rollbackOn = {AxelorException.class, Exception.class})
   @Override
+  public void updateBOM(Product product) {
+    BillOfMaterial originalBOM = product.getDefaultBillOfMaterial();
+    if (originalBOM == null) {
+      LOG.info("No default BOM for " + product.getCode());
+      return;
+    }
+    BillOfMaterial newBOM = billOfMaterialRepository.findByName(originalBOM.getName() + "-UPDATE");
+    if (newBOM == null) {
+      LOG.info("Nothing to update BOM for " + product.getCode());
+      return;
+    }
+    // Compare original and new bom BOM
+    // Products to delete
+    List<Product> deleteList = new ArrayList<>();
+    originalBOM
+        .getBillOfMaterialSet()
+        .forEach(
+            bomChild -> {
+              if (!newBOM.getBillOfMaterialSet().contains(bomChild)) {
+                deleteList.add(bomChild.getProduct());
+              }
+            });
+    // Products to add
+    List<Product> addList = new ArrayList<>();
+    newBOM
+        .getBillOfMaterialSet()
+        .forEach(
+            bomChild -> {
+              if (!originalBOM.getBillOfMaterialSet().contains(bomChild)) {
+                addList.add(bomChild.getProduct());
+              }
+            });
+    // Get BOM version
+    List<BillOfMaterial> versions =
+        Query.of(BillOfMaterial.class)
+            .filter("self.originalBillOfMaterial = ?1", originalBOM)
+            .fetch();
+    final AtomicInteger childSize = new AtomicInteger(versions.size());
+    final AtomicInteger progress = new AtomicInteger(0);
+    LOG.debug(String.format("Remove %d products", deleteList.size()));
+    deleteList
+        .stream()
+        .forEach(
+            productToDel -> {
+              LOG.debug("Remove product " + productToDel.getName());
+              List<Product> toDel = new ArrayList<>();
+              if (productToDel.getIsModel()) {
+                toDel.addAll(getChilds(productToDel));
+              } else {
+                toDel.add(productToDel);
+              }
+              LOG.debug("Delete list " + toDel.size());
+              versions
+                  .stream()
+                  .forEach(
+                      billOfMaterial -> {
+                        LOG.debug(
+                            String.format(
+                                "Process %s %d/%d",
+                                billOfMaterial.getName(),
+                                progress.incrementAndGet(),
+                                childSize.get()));
+                        List<BillOfMaterial> deleteSet = new ArrayList<>();
+                        for (BillOfMaterial bomMember : billOfMaterial.getBillOfMaterialSet()) {
+                          if (toDel.contains(bomMember.getProduct())) {
+                            deleteSet.add(bomMember);
+                          }
+                        }
+                        deleteSet
+                            .stream()
+                            .forEach(bill -> billOfMaterial.removeBillOfMaterialSetItem(bill));
+                      });
+            });
+
+    // Delete
+  }
+
+  @Transactional(rollbackOn = {AxelorException.class, Exception.class})
+  @Override
   public void setFavorite(Product product, Boolean favorite) {
     JsonObject srcJson = getJsonAttr(product);
     JsonObject resJson = updateJson(srcJson, VARIANT_FAVORITE, String.valueOf(favorite));

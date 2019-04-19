@@ -24,6 +24,7 @@
         <field name="attrs.RACK" width="90"/>
         <field name="attrs.DIAMETER" width="80"/>
         <button name="bike-grid-remove-favorite" icon="fa-trash" onClick="action-bike-remove-favorite" width="30"/>
+        <button name="bike-show-stats" icon="fa-file-text-o" onClick="action-bike-show-stats" width="30"/>
     </grid>
 
     <grid name="bike-grid-rv-01" title="Modèles RV01" model="com.axelor.apps.base.db.Product"
@@ -58,7 +59,6 @@
     </grid>
     <grid name="bike-grid-rv-XX" title="Modèles RVXX" model="com.axelor.apps.base.db.Product" orderBy="code,name" x-row-height="80">
         <toolbar>
-            <button name="catalogBtn" title="Catalog" onClick="action-print-product-catalog" icon="fa-book"/>
             <button name="checkDuplicateBtn" title="Check Duplicate" onClick="action-general-check-duplicate-records"/>
         </toolbar>
         <field name="code" x-bind="{{code|unaccent|uppercase}}" width="100"/>
@@ -84,7 +84,7 @@
         <field name="salePrice" width="100" x-scale="2"/>
     </grid>
 
-    <grid name="bike-grid-goods" title="Accessoires" model="com.axelor.apps.base.db.Product" orderBy="code,name" x-row-height="80">
+    <grid name="bike-grid-goods" title="Produits dérivés" model="com.axelor.apps.base.db.Product" orderBy="code,name" x-row-height="80">
         <toolbar>
             <button name="catalogBtn" title="Catalog" onClick="action-print-product-catalog" icon="fa-book"/>
             <button name="checkDuplicateBtn" title="Check Duplicate" onClick="action-general-check-duplicate-records"/>
@@ -94,15 +94,27 @@
         <field name="salePrice" width="100" x-scale="2"/>
     </grid>
 
-    <grid name="bike-grid-parts" title="Composants" model="com.axelor.apps.base.db.Product" orderBy="code,name" x-row-height="80">
+    <grid name="bike-grid-parts" title="Pièces détachées" model="com.axelor.apps.base.db.Product" orderBy="code,name" x-row-height="80">
         <toolbar>
             <button name="catalogBtn" title="Catalog" onClick="action-print-product-catalog" icon="fa-book"/>
             <button name="checkDuplicateBtn" title="Check Duplicate" onClick="action-general-check-duplicate-records"/>
         </toolbar>
         <field name="code" x-bind="{{code|unaccent|uppercase}}" width="100"/>
-        <field name="name" width="300"/>
+        <field name="name" width="200"/>
         <field name="salePrice" width="100" x-scale="2"/>
     </grid>
+
+    <grid name="bike-grid-components" title="Composants" model="com.axelor.apps.base.db.Product" orderBy="code,name" x-row-height="80">
+        <toolbar>
+            <button name="catalogBtn" title="Catalog" onClick="action-print-product-catalog" icon="fa-book"/>
+            <button name="checkDuplicateBtn" title="Check Duplicate" onClick="action-general-check-duplicate-records"/>
+        </toolbar>
+        <field name="code" x-bind="{{code|unaccent|uppercase}}" width="150"/>
+        <field name="name" width="500"/>
+        <field name="purchasePrice" width="150" x-scale="3"/>
+        <field title="Fournisseur" name="defaultSupplierPartner.name" width="200"/>
+    </grid>
+
 
     <search-filters  name="bike-rv-favorites-filters" model="com.axelor.apps.base.db.Product" title="Filtres RV01">
 
