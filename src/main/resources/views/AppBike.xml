@@ -6,7 +6,13 @@
 	<form name="app-bike-config-form" title="App bike" model="com.axelor.apps.base.db.AppBike" canDelete="false" canNew="false" width="large">
 		<panel name="mainPanel">
 			<field name="debug" widget="boolean-switch" />
+			<field name="methodName" />
+			<field name="methodArg" />
+			<button name="utilButton" title="Action" onClick="save,action-util-call"/>
 		</panel>
+
 	</form>
-	
+	<action-method name="action-util-call">
+		<call class="ProductUtilController" method="call"/>
+	</action-method>
 </object-views>

@@ -6,6 +6,8 @@
 
 	<entity name="AppBike" lang="java" extends="App">
 		<boolean name="debug" title="Debug" default="true"/>
+		<string name="methodName" title="Method"/>
+		<long name="methodArg" title="argument" />
 	</entity>
 
 </domain-models>

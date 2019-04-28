@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<object-views xmlns="http://axelor.com/xml/ns/object-views"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://axelor.com/xml/ns/object-views http://axelor.com/xml/ns/object-views/object-views_5.0.xsd">
+    <selection name="bike.options.rv.model.select">
+        <option value="01">01</option>
+        <option value="65">65</option>
+        <option value="XX">XX</option>
+    </selection>
+    <selection name="bike.options.rv.frame.color.select">
+        <option value="raw">Brut</option>
+        <option value="white">Blanc</option>
+        <option value="gun">Gun</option>
+        <option value="black">Black</option>
+        <option value="s_blue">Bleu Shelby</option>
+        <option value="s_white">Blanc Shelby</option>
+    </selection>
+    <selection name="bike.options.rv.frame.size.select">
+        <option value="s">S</option>
+        <option value="l">L</option>
+    </selection>
+    <selection name="bike.options.rv.wheel.color.select">
+        <option value="raw">Brut</option>
+        <option value="white">Blanc</option>
+        <option value="gun">Gun</option>
+        <option value="black">Black</option>
+    </selection>
+
+</object-views>

@@ -814,7 +814,14 @@ public class ComponentGeneratorServiceImpl implements ComponentGeneratorService 
         .forEach(
             e -> {
               if (!properties.containsKey(e.getKey())) {
-                properties.put(e.getKey(), e.getValue().toString());
+                String val = e.getValue().toString();
+                if (val.startsWith("\\\"{")) {
+                  val = val.replace("\\\"", "\"");
+                } else {
+                  val = val.replace(JSON_TEXT_DECO, "");
+                }
+
+                properties.put(e.getKey(), val);
               }
             });
     JsonObjectBuilder builder = Json.createObjectBuilder();
@@ -822,7 +829,7 @@ public class ComponentGeneratorServiceImpl implements ComponentGeneratorService 
         .entrySet()
         .forEach(
             e -> {
-              builder.add(e.getKey(), e.getValue().replace(JSON_TEXT_DECO, ""));
+              builder.add(e.getKey(), e.getValue());
             });
     return builder.build();
   }
