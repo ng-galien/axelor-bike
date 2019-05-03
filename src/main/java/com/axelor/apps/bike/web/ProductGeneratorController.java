@@ -89,7 +89,7 @@ public class ProductGeneratorController {
       int queryResult;
       EntityTransaction transaction;
       billOfMaterialService.generateTree(bom);
-      String removeBomInfo = "delete from base_bom_info where product_root = ?1";
+      String removeBomInfo = "delete from production_bom_info where product_root = ?1";
       LOG.debug("Remove old bom_info for " + product.getId());
       transaction = JPA.em().getTransaction();
       transaction.begin();
@@ -118,9 +118,9 @@ public class ProductGeneratorController {
               + "\tfrom production_temp_bom_tree ctree\n"
               + "\tinner join flat_bom bom on bom.tree_id = ctree.parent\n"
               + ")\n"
-              + "insert into base_bom_info(id, product_root, product_code, product_name, supplier_name, quantity, stock, max_product, purchase_price, stock_value)\n"
+              + "insert into production_bom_info(id, product_root, product_code, product_name, supplier_name, quantity, stock, max_product, purchase_price, stock_value)\n"
               + "select\n"
-              + "\tnextval('base_bom_info_seq')\n"
+              + "\tnextval('production_bom_info_seq')\n"
               + "\t,?1\n"
               + "\t,product.code\n"
               + "\t,product.\"name\"\n"

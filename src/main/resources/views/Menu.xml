@@ -68,15 +68,72 @@
 	<menuitem name="bike-root-bom-generic" parent="bike-root-bom" order="530"
 			  title="Pièces génériques" action="bike.root.bom.gen" />
 	<!--ANALYSIS -->
-	<!--menuitem name="bike-root-analysis" parent="bike-root" order="600"
-			  title="Analyse" />
+	<menuitem name="bike-root-production" parent="bike-root" order="600"
+			  title="Production" />
 
-	<menuitem name="bike-root-analysis-rvXX" parent="bike-root-analysis" order="610"
-			  title="RVXX" action="bike.root.analysis.rvXX" />
+	<menuitem name="bike-root-production-rvXX" parent="bike-root-production" order="610"
+			  title="Les vélos" action="bike.root.production.rvXX" />
 
-	<action-view name="bike.root.analysis.rvXX" title="Analyse RVXX">
-		<view type="dashboard" name="bike.dashboard.rvXX" />
-	</action-view-->
+	<menuitem name="bike-root-production-se" parent="bike-root-production" order="620"
+			  title="Les sous-ensembles"  />
+
+	<menuitem name="bike-root-production-se-all" parent="bike-root-production-se" order="621"
+			  title="Tout"  action="bike.root.production.se.all" />
+
+	<menuitem name="bike-root-production-se-mar" parent="bike-root-production-se" order="622"
+			  title="Moyeu arrière" action="bike.root.production.se.mar" />
+
+	<menuitem name="bike-root-production-se-mav" parent="bike-root-production-se" order="623"
+			  title="Moyeu avant" action="bike.root.production.se.mav" />
+
+	<menuitem name="bike-root-production-se-motor" parent="bike-root-production-se" order="624"
+			  title="Moteur" action="bike.root.production.se.motor" />
+
+	<menuitem name="bike-root-production-se-wheel" parent="bike-root-production-se" order="625"
+			  title="Paire de roues" action="bike.root.production.se.wheel" />
+
+	<action-view name="bike.root.production.rvXX" title="Production RV65"
+		model="com.axelor.apps.production.db.ManufOrder">
+		<view type="grid" name="bike-manuf-order-all-grid" />
+		<domain>self.product.code like 'PF-%'</domain>
+		<context name="_todayDateTime" expr="eval:__config__.app.getTodayDateTime()"/>
+	</action-view>
+
+	<action-view name="bike.root.production.se.all" title="Production sous-ensemble"
+				 model="com.axelor.apps.production.db.ManufOrder">
+		<view type="grid" name="bike-manuf-order-all-grid" />
+		<domain>self.product.code like 'SE-%'</domain>
+		<context name="_todayDateTime" expr="eval:__config__.app.getTodayDateTime()"/>
+	</action-view>
+
+	<action-view name="bike.root.production.se.mav" title="Production moyeu AV"
+				 model="com.axelor.apps.production.db.ManufOrder">
+		<view type="grid" name="bike-manuf-order-se-grid" />
+		<domain>self.product.code like 'SE-010%'</domain>
+		<context name="_todayDateTime" expr="eval:__config__.app.getTodayDateTime()"/>
+	</action-view>
+
+	<action-view name="bike.root.production.se.mar" title="Production moyeu AV"
+				 model="com.axelor.apps.production.db.ManufOrder">
+		<view type="grid" name="bike-manuf-order-se-grid" />
+		<domain>self.product.code like 'SE-020%'</domain>
+		<context name="_todayDateTime" expr="eval:__config__.app.getTodayDateTime()"/>
+	</action-view>
+
+	<action-view name="bike.root.production.se.motor" title="Production moteur"
+				 model="com.axelor.apps.production.db.ManufOrder">
+		<view type="grid" name="bike-manuf-order-se-motor-grid" />
+		<domain>self.product.code like 'SE-030%'</domain>
+		<context name="_todayDateTime" expr="eval:__config__.app.getTodayDateTime()"/>
+	</action-view>
+
+	<action-view name="bike.root.production.se.wheel" title="Production roues"
+				 model="com.axelor.apps.production.db.ManufOrder">
+		<view type="grid" name="bike-manuf-order-se-wheel-grid" />
+		<domain>self.product.code like 'SE-040%'</domain>
+		<context name="_todayDateTime" expr="eval:__config__.app.getTodayDateTime()"/>
+	</action-view>
+
 
 	<!-- Favorites -->
 	<action-view name="bike.root.products.rv.favorites" title="Modèles Favoris"

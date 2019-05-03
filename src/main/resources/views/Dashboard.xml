@@ -30,7 +30,7 @@
             select
             'Achat' as _title
             ,sum(purchase_price) as _purchase_price
-            from base_bom_info info
+            from production_bom_info info
             where info.product_root like :_root_id
             union
             select 'Vente', sale_price
@@ -48,7 +48,7 @@
             select
             supplier_name as _supplier,
             sum(purchase_price) as _purchase_price
-            from base_bom_info info
+            from production_bom_info info
             where info.product_root like :_root_id
             group by _supplier
             order by _purchase_price desc
@@ -59,7 +59,7 @@
     </chart>
 
     <grid name="bike-flat-bom-grid" title="Nomenclature"
-          model="com.axelor.apps.base.db.BomInfo" x-row-height="40" orderBy="productCode"
+          model="com.axelor.apps.production.db.BomInfo" x-row-height="40" orderBy="productCode"
           edit-icon="false" >
         <hilite color="danger" if="maxProduct &lt;= 20"/>
         <hilite color="warning" if="maxProduct &lt;= 50"/>

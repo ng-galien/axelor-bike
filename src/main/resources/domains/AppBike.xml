@@ -7,7 +7,8 @@
 	<entity name="AppBike" lang="java" extends="App">
 		<boolean name="debug" title="Debug" default="true"/>
 		<string name="methodName" title="Method"/>
-		<long name="methodArg" title="argument" />
+		<string name="searchFilter" title="Filter" />
+		<long name="objectId" title="Object id" />
 	</entity>
 
 </domain-models>
