@@ -7,12 +7,13 @@
 		<panel name="mainPanel">
 			<field name="debug" widget="boolean-switch" />
 			<field name="methodName" />
-			<field name="methodArg" />
+			<field name="searchFilter" />
+			<field name="objectId" />
 			<button name="utilButton" title="Action" onClick="save,action-util-call"/>
 		</panel>
 
 	</form>
 	<action-method name="action-util-call">
-		<call class="ProductUtilController" method="call"/>
+		<call class="com.axelor.apps.bike.web.ProductUtilController" method="call"/>
 	</action-method>
 </object-views>

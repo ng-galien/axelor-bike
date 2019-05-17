@@ -19,7 +19,8 @@ public class ProductUtilController {
 
   public void call(ActionRequest request, ActionResponse response) throws AxelorException {
     String method = bikeService.getAppBike().getMethodName();
-    Long arg = bikeService.getAppBike().getMethodArg();
-    productUtilService.executeUtilMethod(method, arg);
+    Long arg = bikeService.getAppBike().getObjectId();
+    String filter = bikeService.getAppBike().getSearchFilter();
+    productUtilService.executeUtilMethod(method, arg, filter);
   }
 }

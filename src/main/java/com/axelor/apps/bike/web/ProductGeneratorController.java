@@ -88,7 +88,8 @@ public class ProductGeneratorController {
     } else {
       int queryResult;
       EntityTransaction transaction;
-      billOfMaterialService.generateTree(bom);
+
+      //billOfMaterialService.generateTree(bom);
       String removeBomInfo = "delete from production_bom_info where product_root = ?1";
       LOG.debug("Remove old bom_info for " + product.getId());
       transaction = JPA.em().getTransaction();
@@ -102,6 +103,68 @@ public class ProductGeneratorController {
       LOG.debug("Result " + queryResult);
 
       String populateBomInfo =
+        "with recursive recursive_bom as\n" +
+          "(\n" +
+          "select \n" +
+          "\tbom_set.bill_of_material_set as bom_id,\n" +
+          "\tparent_product.code as p_product_code,\n" +
+          "\tchild_product.id as c_product_id,\n" +
+          "\tchild_product.code as c_product_code,\n" +
+          "\tchild_product.name as c_product_name,\n" +
+          "\tchild_bom.qty as c_product_qty\n" +
+          "from production_bill_of_material_bill_of_material_set bom_set\n" +
+          "join production_bill_of_material parent_bom on parent_bom.id = bom_set.production_bill_of_material\n" +
+          "join base_product parent_product on parent_product.id = parent_bom.product\n" +
+          "join production_bill_of_material child_bom on child_bom.id = bom_set.bill_of_material_set\n" +
+          "join base_product child_product on child_product.id = child_bom.product\n" +
+          "where parent_product.code = ?1\n" +
+          "\n" +
+          "union all\n" +
+          "\n" +
+          "select \n" +
+          "\tbom_set.bill_of_material_set as bom_id,\n" +
+          "\tparent_product.code as p_product_code,\n" +
+          "\tchild_product.id as c_product_id,\n" +
+          "\tchild_product.code as c_product_code,\n" +
+          "\tchild_product.name as c_product_name,\n" +
+          "\tchild_bom.qty as c_product_qty\n" +
+          "\n" +
+          "from production_bill_of_material_bill_of_material_set bom_set\n" +
+          "join production_bill_of_material parent_bom on parent_bom.id = bom_set.production_bill_of_material\n" +
+          "join base_product parent_product on parent_product.id = parent_bom.product\n" +
+          "join production_bill_of_material child_bom on child_bom.id = bom_set.bill_of_material_set\n" +
+          "join base_product child_product on child_product.id = child_bom.product\n" +
+          "join recursive_bom recursive_bom on recursive_bom.bom_id = bom_set.production_bill_of_material\n" +
+          "\n" +
+          ")\n" +
+          "insert into production_bom_info(id, product_root, product_code, product_name, supplier_name, quantity, stock, max_product, purchase_price, stock_value)\n" +
+          "select\n" +
+          "\tnextval('production_bom_info_seq'),\n" +
+          "\t?1,\n" +
+          "\tflat_bom.c_product_code,\n" +
+          "\tflat_bom.c_product_name,\n" +
+          "\tcoalesce(partner.\"name\", 'Aucun'),\n" +
+          "\tsum(flat_bom.c_product_qty),\n" +
+          "\tcoalesce(stock.current_qty, 0 ),\n" +
+          "\tcoalesce(floor(stock.current_qty/sum(flat_bom.c_product_qty)), 0),\n" +
+          "\tproduct.purchase_price,\n" +
+          "\tproduct.purchase_price * coalesce(stock.current_qty, 0 )\n" +
+          "from recursive_bom flat_bom\n" +
+          "\n" +
+          "join base_product product on product.id = flat_bom.c_product_id\n" +
+          "left join base_partner as partner on partner.id = product.default_supplier_partner\n" +
+          "left join stock_stock_location_line stock on stock.product = product.id and stock.stock_location = 10\n" +
+          "where \n" +
+          "\tproduct.code like 'COMP-%'\n" +
+          "group by \n" +
+          "\tflat_bom.c_product_code,\n" +
+          "\tflat_bom.c_product_name,\n" +
+          "\tpartner.\"name\",\n" +
+          "\tstock.current_qty,\n" +
+          "\tproduct.purchase_price\n" +
+          "order by \n" +
+          "\tflat_bom.c_product_code asc\n";
+      /*populateBomInfo =
           "with recursive flat_bom as\n"
               + "(\n"
               + "select\n"
@@ -143,7 +206,7 @@ public class ProductGeneratorController {
               + "\t\t,partner.\"name\"\n"
               + "\t\t,stock.current_qty\n"
               + "\t\t,product.purchase_price\n"
-              + "\torder by product.code ASC";
+              + "\torder by product.code ASC";*/
       LOG.debug("Insert bom_info for " + product.getId());
       transaction = JPA.em().getTransaction();
       transaction.begin();

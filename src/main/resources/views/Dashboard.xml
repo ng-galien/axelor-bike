@@ -18,7 +18,7 @@
         <view type="chart" name="chart.bike.rvXX.cost.per.supplier"/>
     </action-view>
     <action-view title="" name="bike.dashboard.rvXX.dashlet.grid"
-                 model="com.axelor.apps.base.db.BomInfo"  >
+                 model="com.axelor.apps.production.db.BomInfo"  >
         <view type="grid" name="bike-flat-bom-grid"/>
         <view-param name="limit" value="200"/>
         <domain>self.productRoot like :_root_id</domain>

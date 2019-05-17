@@ -806,69 +806,46 @@ public class ComponentGeneratorServiceImpl implements ComponentGeneratorService 
     return jsonReader.readObject();
   }
 
+  /**
+   * Update the JsonObject with a key/value pair
+   * @param source
+   * @param key
+   * @param value
+   * @return
+   */
   public JsonObject updateJson(JsonObject source, String key, String value) {
-    Map<String, String> properties = new TreeMap<>();
-    properties.put(key, value);
-    source
-        .entrySet()
-        .forEach(
-            e -> {
-              if (!properties.containsKey(e.getKey())) {
-                String val = e.getValue().toString();
-                if (val.startsWith("\\\"{")) {
-                  val = val.replace("\\\"", "\"");
-                } else {
-                  val = val.replace(JSON_TEXT_DECO, "");
-                }
 
-                properties.put(e.getKey(), val);
-              }
-            });
     JsonObjectBuilder builder = Json.createObjectBuilder();
-    properties
-        .entrySet()
-        .forEach(
-            e -> {
-              builder.add(e.getKey(), e.getValue());
-            });
-    return builder.build();
-  }
-
-  public JsonObject updateJson(JsonObject source, Map<String, String> map) {
-    Map<String, String> properties = new TreeMap<>(map);
-    source
-        .entrySet()
-        .forEach(
-            e -> {
-              if (!properties.containsKey(e.getKey())) {
-                properties.put(e.getKey(), e.getValue().toString());
-              }
-            });
-    JsonObjectBuilder builder = Json.createObjectBuilder();
-    properties
-        .entrySet()
-        .forEach(
-            e -> {
-              builder.add(e.getKey(), e.getValue().replace(JSON_TEXT_DECO, ""));
-            });
-    return builder.build();
-  }
-
-  /*
-  public JsonObject enrich(JsonObject source, String key, String value) {
-    JsonObjectBuilder builder = Json.createObjectBuilder();
+    source.entrySet().forEach(e -> {
+      builder.add(e.getKey(), e.getValue());
+    });
     builder.add(key, value);
-    source.entrySet().forEach(e -> builder.add(e.getKey(), e.getValue()));
     return builder.build();
   }
 
-  private JsonObject enrich(JsonObject source, Map<String, String> map) {
+  /**
+   * Update the JsonObject with a map of key/value pairs
+   * @param source
+   * @param map
+   * @return
+   */
+  public JsonObject updateJson(JsonObject source, Map<String, String> map) {
     JsonObjectBuilder builder = Json.createObjectBuilder();
-    source.entrySet().forEach(e -> builder.add(e.getKey(), e.getValue()));
-    map.entrySet().forEach(e -> builder.add(e.getKey(), e.getValue()));
-    return builder.build();
-  }*/
 
+    source.entrySet().forEach(e -> {
+      builder.add(e.getKey(), e.getValue());
+    });
+    map.entrySet().forEach( e -> {
+      builder.add(e.getKey(), e.getValue());
+    });
+    return builder.build();
+  }
+
+  /**
+   *
+   * @param product
+   * @param copy
+   */
   public void copyProduct(Product product, Product copy) {
     copy.setBarCode(null);
     try {

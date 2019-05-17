@@ -52,6 +52,7 @@
             <button name="catalogBtn" title="Catalog" onClick="action-print-product-catalog" icon="fa-book"/>
             <button name="checkDuplicateBtn" title="Check Duplicate" onClick="action-general-check-duplicate-records"/>
         </toolbar>
+        <field name="name" x-bind="{{code|unaccent|uppercase}}" width="100"/>
         <field name="code" x-bind="{{code|unaccent|uppercase}}" width="100"/>
         <field name="attrs.C_FRAME" width="80"/>
         <field name="attrs.DIAMETER" width="80"/>

@@ -10,18 +10,23 @@
 	<menuitem name="bike-root-shop" parent="bike-root" order="0"
 			  title="Magasin"/>
 
+	<!--SHOP >> RV -->
 	<menuitem name="bike-root-rv" parent="bike-root-shop" order="100"
 			  title="Modèles RV"/>
 
+	<!--SHOP >> RV >> FAVORITES -->
 	<menuitem name="bike-root-rv-favorites" parent="bike-root-rv" order="105"
 			  title="Favoris" action="bike.root.products.rv.favorites" />
 
+	<!--SHOP >> RV >> 01 -->
 	<menuitem name="bike-root-rv-01" parent="bike-root-rv" order="110"
 			  title="RV 01" action="bike.root.products.rv.01" />
 
+	<!--SHOP >> RV >> 65 -->
 	<menuitem name="bike-root-rv-65" parent="bike-root-rv" order="120"
 			  title="RV 65" action="bike.root.products.65" />
 
+	<!--SHOP >> RV >> XX -->
 	<menuitem name="bike-root-rv-XX" parent="bike-root-rv" order="130"
 			  title="RV XX" action="bike.root.products.XX" />
 
@@ -67,29 +72,82 @@
 
 	<menuitem name="bike-root-bom-generic" parent="bike-root-bom" order="530"
 			  title="Pièces génériques" action="bike.root.bom.gen" />
-	<!--ANALYSIS -->
+
+	<!--PRODUCTION -->
 	<menuitem name="bike-root-production" parent="bike-root" order="600"
 			  title="Production" />
 
-	<menuitem name="bike-root-production-rvXX" parent="bike-root-production" order="610"
-			  title="Les vélos" action="bike.root.production.rvXX" />
+	<!-- PRODUCTION >> RV65 -->
+	<menuitem name="bike-root-production-rv65" parent="bike-root-production" order="610"
+			  title="RV65" />
 
-	<menuitem name="bike-root-production-se" parent="bike-root-production" order="620"
-			  title="Les sous-ensembles"  />
+	<!-- PRODUCTION >> BIKES >> RV65 >> PF -->
+	<menuitem name="bike-root-production-rv65-pf" parent="bike-root-production-rv65" order="611"
+			  title="Produit final" action="bike.root.production.rv65.pf"/>
 
-	<menuitem name="bike-root-production-se-all" parent="bike-root-production-se" order="621"
+	<action-view name="bike.root.production.rv65.pf" title="Production PF RV65"
+				 model="com.axelor.apps.production.db.ManufOrder">
+		<view type="grid" name="bike-manuf-order-pf-grid" />
+		<view type="form" name="manuf-order-form" />
+		<domain>self.product.code like 'PF-%' and jsonb_extract_path_text(self.product.attrs, 'MODEL') = 'RV65'</domain>
+		<!--domain>self.product.code like 'PF-%' and self.product.attrs.MODEL = 'RV65'</domain-->
+		<context name="_todayDateTime" expr="eval:__config__.app.getTodayDateTime()"/>
+	</action-view>
+
+	<!-- PRODUCTION >> RV65 >> SE -->
+	<menuitem name="bike-root-production-rv65-se" parent="bike-root-production-rv65" order="612"
+			  title="Sous-ensemble" action="bike.root.production.rv65.se"/>
+
+	<action-view name="bike.root.production.rv65.se" title="Production SE RV65"
+				 model="com.axelor.apps.production.db.ManufOrder">
+		<view type="grid" name="bike-manuf-order-all-grid" />
+		<view type="form" name="manuf-order-form" />
+		<domain>self.product.code like 'SE-%' and jsonb_extract_path_text(self.product.attrs,'MODEL') = 'RV65'</domain>
+		<context name="_todayDateTime" expr="eval:__config__.app.getTodayDateTime()"/>
+	</action-view>
+
+	<!-- PRODUCTION >> RV01 -->
+	<menuitem name="bike-root-production-rv01" parent="bike-root-production" order="620"
+			  title="RV01" />
+
+	<!-- PRODUCTION >> RV01 >> PF -->
+	<menuitem name="bike-root-production-rv01-pf" parent="bike-root-production-rv01" order="621"
+			  title="Produit final" action="bike.root.production.rv01.pf"/>
+	<action-view name="bike.root.production.rv01.pf" title="Production RV01"
+				 model="com.axelor.apps.production.db.ManufOrder">
+		<view type="grid" name="bike-manuf-order-pf-grid" />
+		<view type="form" name="manuf-order-form" />
+		<domain>self.product.code like 'PF-%' and jsonb_extract_path_text(self.product.attrs,'MODEL') = 'RV01'</domain>
+		<context name="_todayDateTime" expr="eval:__config__.app.getTodayDateTime()"/>
+	</action-view>
+
+	<!-- PRODUCTION >> RV01 >> SE -->
+	<menuitem name="bike-root-production-rv01-se" parent="bike-root-production-rv01" order="621"
+			  title="Sous-ensemble" action="bike.root.production.rv01.se"/>
+
+	<action-view name="bike.root.production.rv01.se" title="Production SE RV01"
+				 model="com.axelor.apps.production.db.ManufOrder">
+		<view type="grid" name="bike-manuf-order-all-grid" />
+		<view type="form" name="manuf-order-form" />
+		<domain>self.product.code like 'SE-%' and self.product.attrs.MODEL = 'RV01'</domain>
+		<context name="_todayDateTime" expr="eval:__config__.app.getTodayDateTime()"/>
+	</action-view>
+
+	<!-- GENERIC SE -->
+
+	<menuitem name="bike-root-production-se" parent="bike-root-production" order="630"
+			  title="Sous-ensemble"  />
+
+	<menuitem name="bike-root-production-se-all" parent="bike-root-production-se" order="631"
 			  title="Tout"  action="bike.root.production.se.all" />
 
-	<menuitem name="bike-root-production-se-mar" parent="bike-root-production-se" order="622"
+	<menuitem name="bike-root-production-se-mar" parent="bike-root-production-se" order="632"
 			  title="Moyeu arrière" action="bike.root.production.se.mar" />
 
-	<menuitem name="bike-root-production-se-mav" parent="bike-root-production-se" order="623"
+	<menuitem name="bike-root-production-se-mav" parent="bike-root-production-se" order="633"
 			  title="Moyeu avant" action="bike.root.production.se.mav" />
 
-	<menuitem name="bike-root-production-se-motor" parent="bike-root-production-se" order="624"
-			  title="Moteur" action="bike.root.production.se.motor" />
-
-	<menuitem name="bike-root-production-se-wheel" parent="bike-root-production-se" order="625"
+	<menuitem name="bike-root-production-se-wheel" parent="bike-root-production-se" order="634"
 			  title="Paire de roues" action="bike.root.production.se.wheel" />
 
 	<action-view name="bike.root.production.rvXX" title="Production RV65"
