@@ -79,7 +79,7 @@
         <button name="cancelBtn" icon="fa-times-circle" onClick="action-manuf-order-view-cancel" readonlyIf="statusSelect == 2"/>
         <button name="printBtn" title="Print" icon="fa-print" onClick="action-manuf-order-method-print"/>
     </grid>
-    <grid name="bike-manuf-order-se-wheel-grid" title="Paires de roues" model="com.axelor.apps.production.db.ManufOrder" orderBy="-manufOrderSeq">
+    <grid name="bike-manuf-order-se-wheel-grid" title="Paires de roues" model="com.axelor.apps.production.db.ManufOrder" orderBy="manufOrderSeq">
         <toolbar>
             <button name="printBtn" title="Print" icon="fa-print" onClick="action-manuf-order-method-print"/>
             <button name="planBtn" title="Plan" onClick="action-manuf-order-method-plan"/>
@@ -89,9 +89,10 @@
         <hilite color="primary" if="prioritySelect == 2"/>
         <hilite color="info" if="prioritySelect == 1"/>
         <field name="prioritySelect" hidden="true"/>
-        <!--field name="product" form-view="product-form" grid-view="product-grid" width="200"/-->
-        <field name="product.name" />
+        <field name="product" form-view="product-form" grid-view="product-grid" width="200"/>
+        <field name="product.attrs.C_WHEEL" width="80"/>
         <field name="qty" width="80"/>
+        <field name="plannedStartDateT"/>
         <field name="realStartDateT"/>
         <field name="realEndDateT"/>
         <field name="statusSelect"/>
@@ -103,7 +104,7 @@
         <button name="printBtn" title="Print" icon="fa-print" onClick="action-manuf-order-method-print"/>
     </grid>
 
-    <grid name="bike-manuf-order-pf-grid" title="Fabrication" model="com.axelor.apps.production.db.ManufOrder" orderBy="manufOrderSeq">
+    <grid name="bike-manuf-order-pf-grid" title="Produits finis" model="com.axelor.apps.production.db.ManufOrder" orderBy="manufOrderSeq">
         <toolbar>
             <button name="printBtn" title="Print" icon="fa-print" onClick="action-manuf-order-method-print"/>
             <button name="planBtn" title="Plan" onClick="action-manuf-order-method-plan"/>
@@ -117,6 +118,7 @@
         <field name="company" form-view="company-form" grid-view="company-grid"/>
         <field name="workshopStockLocation" if="__config__.app.getApp('production').getManageWorkshop()"/-->
         <field name="product" form-view="product-form" grid-view="product-grid" width="200"/>
+        <field name="product.C_FRAME"/>
         <field name="qty" width="80"/>
         <!--field name="billOfMaterial" grid-view="bill-of-material-grid" form-view="bill-of-material-form"/-->
         <!--field name="prodProcess" grid-view="prod-process-grid" form-view="prod-process-form"/-->
@@ -134,6 +136,24 @@
         <button name="finishBtn" icon="fa-power-off" onClick="action-manuf-order-group-finish" readonlyIf="statusSelect != 4"/>
         <button name="cancelBtn" icon="fa-times-circle" onClick="action-manuf-order-view-cancel" readonlyIf="statusSelect == 2"/>
         <button name="printBtn" title="Print" icon="fa-print" onClick="action-manuf-order-method-print"/>
+    </grid>
+
+    <grid name="bike-stock-move-line-grid" title="Produits finis" model="com.axelor.apps.stock.db.StockMoveLine"
+          orderBy="trackingNumber" editable="true" canSave="true">
+        <hilite color="danger" if="prioritySelect == 4"/>
+        <hilite color="warning" if="prioritySelect == 3"/>
+        <hilite color="primary" if="prioritySelect == 2"/>
+        <hilite color="info" if="prioritySelect == 1"/>
+        <field name="lineTypeSelect" hidden="true"/>
+        <field name="trackingNumber" width="130px"/>
+        <field name="product"
+               form-view="product-form"
+               width="250px"/>
+        <field name="attrs.PF_"/>
+        <field name="attrs.SN_MOTOR_DU" width="250px"/>
+        <field name="attrs.SN_MOTOR_BMS" width="250px"/>
+        <field name="attrs.SN_MOTOR_DISP" width="250px"/>
+        <field name="attrs.SN_KEY" width="150px"/>
     </grid>
 
 

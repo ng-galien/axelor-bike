@@ -89,7 +89,7 @@ public class ProductGeneratorController {
       int queryResult;
       EntityTransaction transaction;
 
-      //billOfMaterialService.generateTree(bom);
+      // billOfMaterialService.generateTree(bom);
       String removeBomInfo = "delete from production_bom_info where product_root = ?1";
       LOG.debug("Remove old bom_info for " + product.getId());
       transaction = JPA.em().getTransaction();
@@ -103,110 +103,110 @@ public class ProductGeneratorController {
       LOG.debug("Result " + queryResult);
 
       String populateBomInfo =
-        "with recursive recursive_bom as\n" +
-          "(\n" +
-          "select \n" +
-          "\tbom_set.bill_of_material_set as bom_id,\n" +
-          "\tparent_product.code as p_product_code,\n" +
-          "\tchild_product.id as c_product_id,\n" +
-          "\tchild_product.code as c_product_code,\n" +
-          "\tchild_product.name as c_product_name,\n" +
-          "\tchild_bom.qty as c_product_qty\n" +
-          "from production_bill_of_material_bill_of_material_set bom_set\n" +
-          "join production_bill_of_material parent_bom on parent_bom.id = bom_set.production_bill_of_material\n" +
-          "join base_product parent_product on parent_product.id = parent_bom.product\n" +
-          "join production_bill_of_material child_bom on child_bom.id = bom_set.bill_of_material_set\n" +
-          "join base_product child_product on child_product.id = child_bom.product\n" +
-          "where parent_product.code = ?1\n" +
-          "\n" +
-          "union all\n" +
-          "\n" +
-          "select \n" +
-          "\tbom_set.bill_of_material_set as bom_id,\n" +
-          "\tparent_product.code as p_product_code,\n" +
-          "\tchild_product.id as c_product_id,\n" +
-          "\tchild_product.code as c_product_code,\n" +
-          "\tchild_product.name as c_product_name,\n" +
-          "\tchild_bom.qty as c_product_qty\n" +
-          "\n" +
-          "from production_bill_of_material_bill_of_material_set bom_set\n" +
-          "join production_bill_of_material parent_bom on parent_bom.id = bom_set.production_bill_of_material\n" +
-          "join base_product parent_product on parent_product.id = parent_bom.product\n" +
-          "join production_bill_of_material child_bom on child_bom.id = bom_set.bill_of_material_set\n" +
-          "join base_product child_product on child_product.id = child_bom.product\n" +
-          "join recursive_bom recursive_bom on recursive_bom.bom_id = bom_set.production_bill_of_material\n" +
-          "\n" +
-          ")\n" +
-          "insert into production_bom_info(id, product_root, product_code, product_name, supplier_name, quantity, stock, max_product, purchase_price, stock_value)\n" +
-          "select\n" +
-          "\tnextval('production_bom_info_seq'),\n" +
-          "\t?1,\n" +
-          "\tflat_bom.c_product_code,\n" +
-          "\tflat_bom.c_product_name,\n" +
-          "\tcoalesce(partner.\"name\", 'Aucun'),\n" +
-          "\tsum(flat_bom.c_product_qty),\n" +
-          "\tcoalesce(stock.current_qty, 0 ),\n" +
-          "\tcoalesce(floor(stock.current_qty/sum(flat_bom.c_product_qty)), 0),\n" +
-          "\tproduct.purchase_price,\n" +
-          "\tproduct.purchase_price * coalesce(stock.current_qty, 0 )\n" +
-          "from recursive_bom flat_bom\n" +
-          "\n" +
-          "join base_product product on product.id = flat_bom.c_product_id\n" +
-          "left join base_partner as partner on partner.id = product.default_supplier_partner\n" +
-          "left join stock_stock_location_line stock on stock.product = product.id and stock.stock_location = 10\n" +
-          "where \n" +
-          "\tproduct.code like 'COMP-%'\n" +
-          "group by \n" +
-          "\tflat_bom.c_product_code,\n" +
-          "\tflat_bom.c_product_name,\n" +
-          "\tpartner.\"name\",\n" +
-          "\tstock.current_qty,\n" +
-          "\tproduct.purchase_price\n" +
-          "order by \n" +
-          "\tflat_bom.c_product_code asc\n";
-      /*populateBomInfo =
-          "with recursive flat_bom as\n"
+          "with recursive recursive_bom as\n"
               + "(\n"
-              + "select\n"
-              + "\tptree.id as tree_id\n"
-              + "\t,ptree.qty as qty\n"
-              + "\tfrom production_temp_bom_tree ptree\n"
-              + "\tinner join base_product base_prod on ptree.product = base_prod.id\n"
-              + "\twhere base_prod.code = ?1\n"
+              + "select \n"
+              + "\tbom_set.bill_of_material_set as bom_id,\n"
+              + "\tparent_product.code as p_product_code,\n"
+              + "\tchild_product.id as c_product_id,\n"
+              + "\tchild_product.code as c_product_code,\n"
+              + "\tchild_product.name as c_product_name,\n"
+              + "\tchild_bom.qty as c_product_qty\n"
+              + "from production_bill_of_material_bill_of_material_set bom_set\n"
+              + "join production_bill_of_material parent_bom on parent_bom.id = bom_set.production_bill_of_material\n"
+              + "join base_product parent_product on parent_product.id = parent_bom.product\n"
+              + "join production_bill_of_material child_bom on child_bom.id = bom_set.bill_of_material_set\n"
+              + "join base_product child_product on child_product.id = child_bom.product\n"
+              + "where parent_product.code = ?1\n"
               + "\n"
-              + "union\n"
-              + "select\n"
-              + "\tctree.id as tree_id\n"
-              + "\t,ctree.qty as qty\n"
-              + "\tfrom production_temp_bom_tree ctree\n"
-              + "\tinner join flat_bom bom on bom.tree_id = ctree.parent\n"
+              + "union all\n"
+              + "\n"
+              + "select \n"
+              + "\tbom_set.bill_of_material_set as bom_id,\n"
+              + "\tparent_product.code as p_product_code,\n"
+              + "\tchild_product.id as c_product_id,\n"
+              + "\tchild_product.code as c_product_code,\n"
+              + "\tchild_product.name as c_product_name,\n"
+              + "\tchild_bom.qty as c_product_qty\n"
+              + "\n"
+              + "from production_bill_of_material_bill_of_material_set bom_set\n"
+              + "join production_bill_of_material parent_bom on parent_bom.id = bom_set.production_bill_of_material\n"
+              + "join base_product parent_product on parent_product.id = parent_bom.product\n"
+              + "join production_bill_of_material child_bom on child_bom.id = bom_set.bill_of_material_set\n"
+              + "join base_product child_product on child_product.id = child_bom.product\n"
+              + "join recursive_bom recursive_bom on recursive_bom.bom_id = bom_set.production_bill_of_material\n"
+              + "\n"
               + ")\n"
               + "insert into production_bom_info(id, product_root, product_code, product_name, supplier_name, quantity, stock, max_product, purchase_price, stock_value)\n"
               + "select\n"
-              + "\tnextval('production_bom_info_seq')\n"
-              + "\t,?1\n"
-              + "\t,product.code\n"
-              + "\t,product.\"name\"\n"
-              + "\t,COALESCE(partner.\"name\", 'Aucun')\n"
-              + "\t,sum(bom.qty)\n"
-              + "\t,COALESCE(stock.current_qty, 0 )\n"
-              + "\t,coalesce(floor(stock.current_qty/sum(bom.qty)), 0)\n"
-              + "\t,product.purchase_price\n"
-              + "\t,product.purchase_price * COALESCE(stock.current_qty, 0 )\n"
-              + "\tfrom flat_bom bom \n"
-              + "\tjoin production_temp_bom_tree tree on tree.id = tree_id\n"
-              + "\tjoin base_product product on product.id = tree.product\n"
-              + "\tleft join base_partner as partner on partner.id = product.default_supplier_partner\n"
-              + "\tleft join stock_stock_location_line stock on stock.product = product.id and stock.stock_location = 10\n"
-              + "\twhere \n"
-              + "\t\tproduct.code like 'COMP-%'\n"
-              + "\tgroup by \n"
-              + "\t\tproduct.code\n"
-              + "\t\t,product.\"name\"\n"
-              + "\t\t,partner.\"name\"\n"
-              + "\t\t,stock.current_qty\n"
-              + "\t\t,product.purchase_price\n"
-              + "\torder by product.code ASC";*/
+              + "\tnextval('production_bom_info_seq'),\n"
+              + "\t?1,\n"
+              + "\tflat_bom.c_product_code,\n"
+              + "\tflat_bom.c_product_name,\n"
+              + "\tcoalesce(partner.\"name\", 'Aucun'),\n"
+              + "\tsum(flat_bom.c_product_qty),\n"
+              + "\tcoalesce(stock.current_qty, 0 ),\n"
+              + "\tcoalesce(floor(stock.current_qty/sum(flat_bom.c_product_qty)), 0),\n"
+              + "\tproduct.purchase_price,\n"
+              + "\tproduct.purchase_price * coalesce(stock.current_qty, 0 )\n"
+              + "from recursive_bom flat_bom\n"
+              + "\n"
+              + "join base_product product on product.id = flat_bom.c_product_id\n"
+              + "left join base_partner as partner on partner.id = product.default_supplier_partner\n"
+              + "left join stock_stock_location_line stock on stock.product = product.id and stock.stock_location = 10\n"
+              + "where \n"
+              + "\tproduct.code like 'COMP-%'\n"
+              + "group by \n"
+              + "\tflat_bom.c_product_code,\n"
+              + "\tflat_bom.c_product_name,\n"
+              + "\tpartner.\"name\",\n"
+              + "\tstock.current_qty,\n"
+              + "\tproduct.purchase_price\n"
+              + "order by \n"
+              + "\tflat_bom.c_product_code asc\n";
+      /*populateBomInfo =
+      "with recursive flat_bom as\n"
+          + "(\n"
+          + "select\n"
+          + "\tptree.id as tree_id\n"
+          + "\t,ptree.qty as qty\n"
+          + "\tfrom production_temp_bom_tree ptree\n"
+          + "\tinner join base_product base_prod on ptree.product = base_prod.id\n"
+          + "\twhere base_prod.code = ?1\n"
+          + "\n"
+          + "union\n"
+          + "select\n"
+          + "\tctree.id as tree_id\n"
+          + "\t,ctree.qty as qty\n"
+          + "\tfrom production_temp_bom_tree ctree\n"
+          + "\tinner join flat_bom bom on bom.tree_id = ctree.parent\n"
+          + ")\n"
+          + "insert into production_bom_info(id, product_root, product_code, product_name, supplier_name, quantity, stock, max_product, purchase_price, stock_value)\n"
+          + "select\n"
+          + "\tnextval('production_bom_info_seq')\n"
+          + "\t,?1\n"
+          + "\t,product.code\n"
+          + "\t,product.\"name\"\n"
+          + "\t,COALESCE(partner.\"name\", 'Aucun')\n"
+          + "\t,sum(bom.qty)\n"
+          + "\t,COALESCE(stock.current_qty, 0 )\n"
+          + "\t,coalesce(floor(stock.current_qty/sum(bom.qty)), 0)\n"
+          + "\t,product.purchase_price\n"
+          + "\t,product.purchase_price * COALESCE(stock.current_qty, 0 )\n"
+          + "\tfrom flat_bom bom \n"
+          + "\tjoin production_temp_bom_tree tree on tree.id = tree_id\n"
+          + "\tjoin base_product product on product.id = tree.product\n"
+          + "\tleft join base_partner as partner on partner.id = product.default_supplier_partner\n"
+          + "\tleft join stock_stock_location_line stock on stock.product = product.id and stock.stock_location = 10\n"
+          + "\twhere \n"
+          + "\t\tproduct.code like 'COMP-%'\n"
+          + "\tgroup by \n"
+          + "\t\tproduct.code\n"
+          + "\t\t,product.\"name\"\n"
+          + "\t\t,partner.\"name\"\n"
+          + "\t\t,stock.current_qty\n"
+          + "\t\t,product.purchase_price\n"
+          + "\torder by product.code ASC";*/
       LOG.debug("Insert bom_info for " + product.getId());
       transaction = JPA.em().getTransaction();
       transaction.begin();

@@ -5,9 +5,9 @@
     <!-- RV XXX Dashboard -->
     <dashboard title="Vue d'ensemble" name="bike.dashboard.rvXX" >
 
+        <dashlet action="bike.dashboard.rvXX.dashlet.grid" height="700" colSpan="12"/>
         <dashlet action="bike.dashboard.rvXX.dashlet.cost" height="200" colSpan="12" />
         <dashlet action="bike.dashboard.rvXX.dashlet.cost.per.supplier" height="500" colSpan="12"/>
-        <dashlet action="bike.dashboard.rvXX.dashlet.grid" height="700" colSpan="12"/>
 
     </dashboard>
 

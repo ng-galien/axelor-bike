@@ -81,28 +81,41 @@
 	<menuitem name="bike-root-production-rv65" parent="bike-root-production" order="610"
 			  title="RV65" />
 
+	<!--PRODUCTION >> RV65 >> EOL -->
+	<menuitem name="bike-root-production-rv65-eol" parent="bike-root-production-rv65" order="613"
+			  title="EOL" action="bike.root.production.rv65.oel" />
+
+	<action-view name="bike.root.production.rv65.oel" title="RV65: End of line"
+				 model="com.axelor.apps.stock.db.StockMoveLine">
+		<view type="grid" name="bike-stock-move-line-grid" />
+		<view type="form" name="stock-move-line-form" />
+		<domain>self.product.code like 'PF-%' and self.product.attrs.MODEL = 'RV65'</domain>
+		<context name="_todayDateTime" expr="eval:__config__.app.getTodayDateTime()"/>
+	</action-view>
+
 	<!-- PRODUCTION >> BIKES >> RV65 >> PF -->
-	<menuitem name="bike-root-production-rv65-pf" parent="bike-root-production-rv65" order="611"
-			  title="Produit final" action="bike.root.production.rv65.pf"/>
+	<menuitem name="bike-root-production-rv65-pf" parent="bike-root-production-rv65" order="615"
+			  title="OF" action="bike.root.production.rv65.pf"/>
 
 	<action-view name="bike.root.production.rv65.pf" title="Production PF RV65"
 				 model="com.axelor.apps.production.db.ManufOrder">
 		<view type="grid" name="bike-manuf-order-pf-grid" />
 		<view type="form" name="manuf-order-form" />
-		<domain>self.product.code like 'PF-%' and jsonb_extract_path_text(self.product.attrs, 'MODEL') = 'RV65'</domain>
-		<!--domain>self.product.code like 'PF-%' and self.product.attrs.MODEL = 'RV65'</domain-->
+		<!--domain>self.product.code like 'PF-%' and jsonb_extract_path_text(self.product.attrs, 'MODEL') = 'RV65'</domain-->
+		<domain>self.product.code like 'PF-%' and self.product.attrs.MODEL = 'RV65'</domain>
 		<context name="_todayDateTime" expr="eval:__config__.app.getTodayDateTime()"/>
 	</action-view>
 
 	<!-- PRODUCTION >> RV65 >> SE -->
-	<menuitem name="bike-root-production-rv65-se" parent="bike-root-production-rv65" order="612"
+	<menuitem name="bike-root-production-rv65-se" parent="bike-root-production-rv65" order="617"
 			  title="Sous-ensemble" action="bike.root.production.rv65.se"/>
 
 	<action-view name="bike.root.production.rv65.se" title="Production SE RV65"
 				 model="com.axelor.apps.production.db.ManufOrder">
 		<view type="grid" name="bike-manuf-order-all-grid" />
 		<view type="form" name="manuf-order-form" />
-		<domain>self.product.code like 'SE-%' and jsonb_extract_path_text(self.product.attrs,'MODEL') = 'RV65'</domain>
+		<!--domain>self.product.code like 'SE-%' and jsonb_extract_path_text(self.product.attrs,'MODEL') = 'RV65'</domain-->
+		<domain>self.product.code like 'SE-%' and self.product.MODEL = 'RV65'</domain>
 		<context name="_todayDateTime" expr="eval:__config__.app.getTodayDateTime()"/>
 	</action-view>
 
@@ -110,19 +123,31 @@
 	<menuitem name="bike-root-production-rv01" parent="bike-root-production" order="620"
 			  title="RV01" />
 
+	<!--PRODUCTION >> RV01 >> EOL -->
+	<menuitem name="bike-root-production-rv01-eol" parent="bike-root-production-rv01" order="623"
+			  title="EOL" action="bike.root.production.rv01.oel" />
+
+	<action-view name="bike.root.production.rv01.oel" title="RV01: End of line"
+				 model="com.axelor.apps.stock.db.StockMoveLine">
+		<view type="grid" name="bike-stock-move-line-grid" />
+		<view type="form" name="stock-move-line-form" />
+		<domain>self.product.code like 'PF-RV01-%'</domain>
+		<context name="_todayDateTime" expr="eval:__config__.app.getTodayDateTime()"/>
+	</action-view>
+
 	<!-- PRODUCTION >> RV01 >> PF -->
-	<menuitem name="bike-root-production-rv01-pf" parent="bike-root-production-rv01" order="621"
+	<menuitem name="bike-root-production-rv01-pf" parent="bike-root-production-rv01" order="625"
 			  title="Produit final" action="bike.root.production.rv01.pf"/>
 	<action-view name="bike.root.production.rv01.pf" title="Production RV01"
 				 model="com.axelor.apps.production.db.ManufOrder">
 		<view type="grid" name="bike-manuf-order-pf-grid" />
 		<view type="form" name="manuf-order-form" />
-		<domain>self.product.code like 'PF-%' and jsonb_extract_path_text(self.product.attrs,'MODEL') = 'RV01'</domain>
+		<domain>self.product.code like 'PF-%' and self.product.MODEL = 'RV01'</domain>
 		<context name="_todayDateTime" expr="eval:__config__.app.getTodayDateTime()"/>
 	</action-view>
 
 	<!-- PRODUCTION >> RV01 >> SE -->
-	<menuitem name="bike-root-production-rv01-se" parent="bike-root-production-rv01" order="621"
+	<menuitem name="bike-root-production-rv01-se" parent="bike-root-production-rv01" order="627"
 			  title="Sous-ensemble" action="bike.root.production.rv01.se"/>
 
 	<action-view name="bike.root.production.rv01.se" title="Production SE RV01"

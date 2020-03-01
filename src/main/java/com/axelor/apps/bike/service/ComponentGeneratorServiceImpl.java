@@ -319,6 +319,10 @@ public class ComponentGeneratorServiceImpl implements ComponentGeneratorService 
     cardinal =
         cardinal.stream().filter(url -> !childUrl.contains(url)).collect(Collectors.toList());
     LOG.debug(String.format("Final cardinal size is %d", cardinal.size()));
+    // Limit the size, batch of 300...
+    cardinal = cardinal.stream().limit(300).collect(toList());
+    LOG.debug("Remove existing variants...");
+
     // The number of products we have to find
     int targetSize = productMap.size();
 
@@ -357,7 +361,7 @@ public class ComponentGeneratorServiceImpl implements ComponentGeneratorService 
             BillOfMaterial bomCopy = generateNewVersion(bomModel, index.get());
             updateProductCopy(url, model, productCopy, index.get(), variantMap, extendConfig);
             productCopy.setDefaultBillOfMaterial(bomCopy);
-
+            LOG.debug(String.format("Product: %s", productCopy.getCode()));
             copyBOM(productCopy, bomCopy, selectedSet);
             count.incrementAndGet();
           } else {
@@ -808,6 +812,7 @@ public class ComponentGeneratorServiceImpl implements ComponentGeneratorService 
 
   /**
    * Update the JsonObject with a key/value pair
+   *
    * @param source
    * @param key
    * @param value
@@ -816,15 +821,19 @@ public class ComponentGeneratorServiceImpl implements ComponentGeneratorService 
   public JsonObject updateJson(JsonObject source, String key, String value) {
 
     JsonObjectBuilder builder = Json.createObjectBuilder();
-    source.entrySet().forEach(e -> {
-      builder.add(e.getKey(), e.getValue());
-    });
+    source
+        .entrySet()
+        .forEach(
+            e -> {
+              builder.add(e.getKey(), e.getValue());
+            });
     builder.add(key, value);
     return builder.build();
   }
 
   /**
    * Update the JsonObject with a map of key/value pairs
+   *
    * @param source
    * @param map
    * @return
@@ -832,17 +841,21 @@ public class ComponentGeneratorServiceImpl implements ComponentGeneratorService 
   public JsonObject updateJson(JsonObject source, Map<String, String> map) {
     JsonObjectBuilder builder = Json.createObjectBuilder();
 
-    source.entrySet().forEach(e -> {
-      builder.add(e.getKey(), e.getValue());
-    });
-    map.entrySet().forEach( e -> {
-      builder.add(e.getKey(), e.getValue());
-    });
+    source
+        .entrySet()
+        .forEach(
+            e -> {
+              builder.add(e.getKey(), e.getValue());
+            });
+    map.entrySet()
+        .forEach(
+            e -> {
+              builder.add(e.getKey(), e.getValue());
+            });
     return builder.build();
   }
 
   /**
-   *
    * @param product
    * @param copy
    */

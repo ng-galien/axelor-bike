@@ -22,5 +22,6 @@ public class ProductUtilController {
     Long arg = bikeService.getAppBike().getObjectId();
     String filter = bikeService.getAppBike().getSearchFilter();
     productUtilService.executeUtilMethod(method, arg, filter);
+
   }
 }
